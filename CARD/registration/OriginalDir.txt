@@ -1,0 +1,1 @@
+/srv/ZoltaN/venv/lib/python2.7/site-packages
