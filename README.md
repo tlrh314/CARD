@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-CARD
-====
-
 UvA-Grassroots project Course Attendance Registration: Digitalized (CARD).
 =======
-UvA-Grassroots project Course Attendance Registration: Digitalized (CARD).
 
 Keywords: Attendance registration, RFID student id card, CARD, University of
 Amsterdam.
@@ -25,4 +20,3 @@ that is currently sent round to register student attendance. Students will be
 enabled to monitor their progress for the course at home.
 
 The project is subsidized by the UvA as part of the UvA Grassroots program.
->>>>>>> 252634f4d0f49940a6facd6b3507c2346ee32ef0
