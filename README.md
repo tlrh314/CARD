@@ -21,11 +21,11 @@ enabled to monitor their progress for the course at home.
 
 The project is subsidized by the UvA as part of the UvA Grassroots program.
 
-** Software versions **
+**Software versions**
 
-Python 2.7.5+
-virtualenv 1.11.2
-Django 1.6.2
-MySQL Ver 14.14 Distrib 5.5.32, for debian-linux-gnu (x86_64)
-Apache/2.4.6
-mod_wsgi-3.4
+* Python 2.7.5+
+* virtualenv 1.11.2
+* Django 1.6.2
+* MySQL Ver 14.14 Distrib 5.5.32, for debian-linux-gnu (x86_64)
+* Apache/2.4.6
+* mod_wsgi-3.4
