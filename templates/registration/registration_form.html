@@ -4,17 +4,14 @@
 {% block title %}{% trans "CARD - Sign Up" %}{% endblock %}
 
 {% block content %}
-{% bootstrap_messages %}
-<div id"register">
-  <h2> Sign up </h2>
-  <form action='' method="post" class="form-horizontal">
-    {% csrf_token %}
-    {% bootstrap_form form %}
-    {% buttons %}
-    <button type="submit" class="btn btn-primary">
-      {% bootstrap_icon "star" %} Submit
-    </button>
-    {% endbuttons %}
-  </form>
-</div>
+<h1> Sign up </h1>
+<form action='' method="post" class="form-horizontal">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {% buttons %}
+  <button type="submit" class="btn btn-primary">
+    {% bootstrap_icon "star" %} Submit
+  </button>
+  {% endbuttons %}
+</form>
 {% endblock %}

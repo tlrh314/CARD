@@ -1,0 +1,10 @@
+{% extends "base.html" %} 
+{% load staticfiles %}
+{% block title %}CARD - Error 404/Page Not Found!{% endblock %}
+{% block content %}
+<h1>Error 404 - Page Not Found!</h1>
+<div class="row text-center">
+  <img src="{% static 'deadlink.png' %}" alt="You have found a dead link!"
+  class="img-rounded">
+</div>
+{% endblock %}
