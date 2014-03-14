@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-ngo
-*.log
-*.pot
-*.pyc
-local_settings.py
-settings.py
-
-=======
->>>>>>> 252634f4d0f49940a6facd6b3507c2346ee32ef0
 # Python
 *.py[cod]
 
@@ -46,7 +36,6 @@ nosetests.xml
 .project
 .pydevproject
 
-<<<<<<< HEAD
 # LaTeX
 *.acn
 *.acr
@@ -80,11 +69,13 @@ nosetests.xml
 *.vrb
 *.xdy
 *.tdo
-=======
+
 # Django
 *.log
 *.pot
 *.pyc
 local_settings.py
 settings.py
->>>>>>> 252634f4d0f49940a6facd6b3507c2346ee32ef0
+
+# Vim
+*.swp
