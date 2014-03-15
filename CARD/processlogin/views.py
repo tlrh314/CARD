@@ -24,14 +24,14 @@ logger = logging.getLogger('search')
 from functools import wraps
 
 # Might not be needed?
-def person(request, pk):
-    person = get_object_or_404(Person, id=pk)
-
-    context = sorted_tags(person.tags.all())
-    context['person'] = person
-    context['syntax'] = SEARCH_SETTINGS['syntax'],
-    context['next'] = person.get_absolute_url()
-    return render(request, 'person.html', context)
+#def person(request, pk):
+#    person = get_object_or_404(Person, id=pk)
+#
+#    context = sorted_tags(person.tags.all())
+#    context['person'] = person
+#    context['syntax'] = SEARCH_SETTINGS['syntax'],
+#    context['next'] = person.get_absolute_url()
+#    return render(request, 'person.html', context)
 
 def login_user(request):
     username = password = redirect = ''
@@ -50,7 +50,7 @@ def login_user(request):
                 redirect = LOGIN_REDIRECT_URL
             data = json.dumps({'success': True,
                                'redirect': redirect })
-        else:
+            else:
             data = json.dumps({'success': False,
                                'redirect': redirect })
         return HttpResponse(data, mimetype='application/json')
@@ -129,4 +129,4 @@ def index(request):
     hank = "HankMoody"
     template = loader.get_template('processlogin/index.html')
     context = RequestContext(request, {'HANK!': hank,})
-    return HttpResponse(template.render(context))
+    return HttpResponse(template.render(hank))
