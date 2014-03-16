@@ -27,6 +27,8 @@ from registration.backends.default.views import RegistrationView
 
 from registration.forms import MyCustomRegistrationForm
 
+from registration import views
+
 urlpatterns = patterns('',
         url(r'^activate/complete/$',
             TemplateView.as_view(template_name='registration/activation_complete.html'),
@@ -46,5 +48,11 @@ urlpatterns = patterns('',
         url(r'^register/closed/$',
             TemplateView.as_view(template_name='registration/registration_closed.html'),
             name='registration_disallowed'),
+        url(r'ivoauth/callback', views.ivoauth_callback, name='ivoauth_callback'),
+        url(r'ivoauth$', views.ivoauth, name='ivoauth'),
+        url(r'^login',
+            views.ivoauth, name='login'),
+        #url(r'^logout',
+        #    views.logout_user, name='logout'),
         (r'', include('registration.auth_urls')),
         )
