@@ -11,12 +11,13 @@ class RegistrationAdmin(admin.ModelAdmin):
     list_display = ('user', 'activation_key_expired')
     raw_id_fields = ['user']
     search_fields = ('user__username', 'user__first_name', 'user__last_name')
+        #'user__UvANetID', 'user__external_id')
 
     def activate_users(self, request, queryset):
         """
         Activates the selected users, if they are not alrady
         activated.
-        
+
         """
         for profile in queryset:
             RegistrationProfile.objects.activate_user(profile.activation_key)
@@ -30,7 +31,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         who are eligible to activate; emails will not be sent to users
         whose activation keys have expired or who have already
         activated.
-        
+
         """
         if Site._meta.installed:
             site = Site.objects.get_current()
