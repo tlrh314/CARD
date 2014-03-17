@@ -71,16 +71,16 @@ class RegistrationView(BaseRegistrationView):
         class of this backend as the sender.
 
         """
-        username, email, first_name, last_name, password  = \
+        username, email, first_name, last_name, external_id, password  = \
                 cleaned_data['username'], cleaned_data['email'], \
                 cleaned_data['first_name'], cleaned_data['last_name'], \
-                cleaned_data['password1']
+                cleaned_data['external_id'], cleaned_data['password1']
         if Site._meta.installed:
             site = Site.objects.get_current()
         else:
             site = RequestSite(request)
         new_user = RegistrationProfile.objects.create_inactive_user(username,\
-                email, first_name, last_name, password, site)
+                email, first_name, last_name, external_id, password, site)
         signals.user_registered.send(sender=self.__class__,\
                 user=new_user,request=request)
         return new_user

@@ -5,6 +5,8 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     url(r'^$', 'CARD.views.index', name='index'),
+    url(r'ivoauth/callback', 'registration.views.ivoauth_callback'),
+    url(r'ivoauth/$', 'registration.views.ivoauth', name='ivoauth'),
     url(r'^polls/', include('polls.urls', namespace="polls")),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^accounts/', include('registration.backends.default.urls')),

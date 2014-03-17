@@ -8,7 +8,7 @@ from django.views.generic.edit import FormView
 #from django.views import generic
 from django.http import HttpResponse, HttpResponseRedirect, \
     HttpResponseBadRequest, HttpResponseNotFound
-from django.contrib.auth import authenticate,login
+from django.contrib.auth import login, authenticate
 
 from registration import signals
 from registration.forms import RegistrationForm
@@ -19,6 +19,8 @@ import logging
 
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError
+
+from django.contrib.auth.models import User
 
 from CARD.settings import LOGIN_REDIRECT_URL, IVOAUTH_TOKEN, IVOAUTH_URL
 
@@ -191,8 +193,16 @@ def ivoauth_callback(request):
     if content["status"] == "success":
         logger.debug("Authentication successful")
         attributes = content["attributes"]
+        UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
         external_id = "surfconext/" + attributes["saml:sp:NameID"]["Value"]
-        email = attributes["urn:mace:dir:attribute-def:mail"][0]
+        try:
+            # User exists
+            user = authenticate(username=UvANetID)
+            login(request, user)
+            logger.debug("Logged in user '{}'".format(user))
+        except:
+            # User does not exist
+            pass # to implement
 #        person_set = Person.objects.filter(external_id=external_id)
         # TODO what if a person with same name/email exists?
         # 1. Ask for confirmation
@@ -200,11 +210,10 @@ def ivoauth_callback(request):
         # 3. Send email
 #        if not person_set.exists():
 #            person = Person()
-#            person.UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
-#            #surname = attributes["urn:mace:dir:attribute-def:sn"]
+#            person.username = attributes["urn:mace:dir:attribute-def:uid"][0]
+#            person.email = attributes["urn:mace:dir:attribute-def:mail"][0]
 #            first_name = attributes["urn:mace:dir:attribute-def:givenName"]
 #            person.name = attributes["urn:mace:dir:attribute-def:cn"][0]
-#            #displayname = attributes["urn:mace:dir:attribute-def:displayName"]
 #            person.email = email
 #            person.external_id = external_id
 #            logger.debug("Created new person '" + person.UvANetID + "'")
@@ -228,10 +237,8 @@ def ivoauth_callback(request):
     else:
         logger.debug("Authentication failed")
     return HttpResponseRedirect('/')
-    #return render_to_response('registration/ivoauth_callback.html', attributes)
-    # Print content
-    # html = "<html><body>%s.</body></html>" % content
-    # return HttpResponse(html)
+    #html = "<html><body>%s </body></html>" % user
+    #return HttpResponse(html)
 
 #def login_user(request):
 #    username = password = redirect = ''
