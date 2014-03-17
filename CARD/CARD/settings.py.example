@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'bootstrap3',
     'polls',
     'registration',
 )
@@ -85,7 +86,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-STATIC_ROOT = "CARD/static/" # manage collectstatic
+STATIC_ROOT = "/path/to/CARD/static/" # manage collectstatic
 STATIC_URL = '/static/'
 
 
@@ -116,8 +117,68 @@ EMAIL_USE_TLS = True
 LOGIN_REQUIRED_URLS_EXCEPTIONS = (
     r'^/accounts/', # enable users to login without redirect to login.
     r'^/admin/', # password protected by admin views.
+    r'^/ivoauth/',
     r'^/$',
 )
 LOGIN_REQUIRED_URLS = (
     r'/(.*)$', # the index file specified in CARD/CARD/views.py may be viewed.
 )
+
+# Settings for IvoAuth wrapper
+IVOAUTH_TOKEN = "MySuperSecretToken"
+IVOAUTH_URL="MyIvOAuthURL"
+AUTHENTICATION_BACKENDS = ('registration.auth_backend.PasswordlessAuthBackend', \
+        'django.contrib.auth.backends.ModelBackend')
+
+# Settings for django-bootstrap3.
+BOOTSTRAP3 = {
+    'jquery_url': '//code.jquery.com/jquery.min.js',
+    'base_url': '//netdna.bootstrapcdn.com/bootstrap/3.0.3/',
+    'css_url': None,
+    'theme_url': None,
+    'javascript_url': None,
+    'horizontal_label_class': 'col-md-2',
+    'horizontal_field_class': 'col-md-4',
+}
+# Logging performed by this configuration is to send an email
+# to the site admins on every HTTP 500 error when DEBUG=False.
+# If DEBUG=True, messages will be written to console. See
+# http://docs.djangoproject.com/en/dev/topics/logging for
+# more details on how to customize your logging configuration.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+    },
+    'loggers': {
+        'search': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
