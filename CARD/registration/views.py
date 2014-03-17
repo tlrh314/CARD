@@ -12,10 +12,14 @@ from django.contrib.auth import login, authenticate
 
 from registration import signals
 from registration.forms import RegistrationForm
+from registration.models import RegistrationProfile
+from django.contrib.sites.models import RequestSite
+from django.contrib.sites.models import Site
 
 import re
 import json
 import logging
+import string, random
 
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError
@@ -194,75 +198,33 @@ def ivoauth_callback(request):
         logger.debug("Authentication successful")
         attributes = content["attributes"]
         UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
-        external_id = "surfconext/" + attributes["saml:sp:NameID"]["Value"]
         try:
-            # User exists
+            # User exists, log in.
             user = authenticate(username=UvANetID)
             login(request, user)
             logger.debug("Logged in user '{}'".format(user))
         except:
-            # User does not exist
-            pass # to implement
-#        person_set = Person.objects.filter(external_id=external_id)
-        # TODO what if a person with same name/email exists?
-        # 1. Ask for confirmation
-        # 2. Notify admin?
-        # 3. Send email
-#        if not person_set.exists():
-#            person = Person()
-#            person.username = attributes["urn:mace:dir:attribute-def:uid"][0]
-#            person.email = attributes["urn:mace:dir:attribute-def:mail"][0]
-#            first_name = attributes["urn:mace:dir:attribute-def:givenName"]
-#            person.name = attributes["urn:mace:dir:attribute-def:cn"][0]
-#            person.email = email
-#            person.external_id = external_id
-#            logger.debug("Created new person '" + person.UvANetID + "'")
-#        else:
-#            person = person_set.get()
-#        if not person.user:
-#            user = User()
-#            user.username = person.UvANetID
-#            user.first_name = first_name
-#            user.email = email
-#            user.set_password(utils.id_generator(size=12))
-#            user.save()
-#            person.user = user
-#            logger.debug("User '{}' linked to person '{}'".
-#                         format(user, person))
-#        user = person.user
-#        person.save()
-#        user = authenticate(username=user.username)
-#        login(request, user)
-#        logger.debug("Logged in user '{}'".format(user))
+            # User does not exist, create new user.
+            username = attributes["urn:mace:dir:attribute-def:uid"][0]
+            email = attributes["urn:mace:dir:attribute-def:mail"][0]
+            chars = string.ascii_uppercase+string.digits
+            password = ''.join(random.choice(chars) for x in range(12))
+            first_name = attributes["urn:mace:dir:attribute-def:givenName"][0]
+            last_name = attributes["urn:mace:dir:attribute-def:cn"][0]
+            surfConnextID = "surfconext/" + attributes["saml:sp:NameID"]["Value"]
+            if Site._meta.installed:
+                site = Site.objects.get_current()
+            else:
+                site = RequestSite(request)
+            user = RegistrationProfile.objects.create_active_user(username, \
+                    email, password, first_name, last_name, surfConnextID, site)
+            logger.debug("Created new user '" + user.username+ "'")
+
+            user = authenticate(username=user.username)
+            login(request, user)
+            logger.debug("Logged in user '{}'".format(user))
     else:
         logger.debug("Authentication failed")
     return HttpResponseRedirect('/')
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
-
-#def login_user(request):
-#    username = password = redirect = ''
-#    state = 'Not logged in'
-#    if request.method == "POST" and request.is_ajax():
-#        username = request.POST['username']
-#        password = request.POST['password']
-#        redirect = request.POST.get('next', '/')
-#        user = authenticate(username=username, password=password)
-#        if user is not None and user.is_active:
-#            state = 'Logged in'
-#            login(request, user)
-#
-#            # Check if redirecturl valid
-#            if '//' in redirect and re.match(r'[^\?]*//', redirect):
-#                redirect = LOGIN_REDIRECT_URL
-#            data = json.dumps({'success': True,
-#                               'redirect': redirect})
-#        else:
-#            data = json.dumps({'success': False,
-#                               'redirect': redirect})
-#        return HttpResponse(data, mimetype='application/json')
-#    return HttpResponseBadRequest()
-#
-#def logout_user(request):
-#    logout(request)
-#    return HttpResponseRedirect('/')

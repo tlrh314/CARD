@@ -4,5 +4,15 @@
 {% block content %}
 <h1>Home of the CARD </h1>
 Welcome to CARD website
+{% if user.is_authenticated %}
+<ul>
+  <li>Username: {{ user.username }} </li>
+  <li>Email: {{ user.email }} </li>
+  <li>First Name: {{ user.first_name }} </li>
+  <li>Last Name: {{ user.last_name }} </li>
+</ul>
+{% endif %}
+{% if user.is_superuser %}
+<p> Adminbaasje </p>
+{% endif %}
 {% endblock %}
-

@@ -71,7 +71,7 @@ class RegistrationManager(models.Manager):
         return False
 
     def create_inactive_user(self, username, email, password, first_name, \
-        last_name, external_id, site, send_email=True):
+        last_name, surfConnextID, site, send_email=True):
         """
         Create a new, inactive ``User``, generate a
         ``RegistrationProfile`` and email its activation key to the
@@ -84,7 +84,6 @@ class RegistrationManager(models.Manager):
         new_user = User.objects.create_user(username, email, password)
         new_user.first_name = first_name
         new_user.last_name = last_name
-        new_user.external_id = None
         new_user.is_active = False
         new_user.save()
 
@@ -95,6 +94,18 @@ class RegistrationManager(models.Manager):
 
         return new_user
     create_inactive_user = transaction.commit_on_success(create_inactive_user)
+
+    def create_active_user(self, username, email, password, first_name, \
+        last_name, surfConnextID, site):
+        new_user = User.objects.create_user(username, email, password)
+        new_user.first_name = first_name
+        new_user.last_name = last_name
+        new_user.surfConnextID = surfConnextID
+        new_user.is_active = True
+        new_user.save()
+        registration_profile = self.create_profile(new_user)
+
+        return new_user
 
     def create_profile(self, user):
         """
@@ -111,7 +122,8 @@ class RegistrationManager(models.Manager):
         if isinstance(username, unicode):
             username = username.encode('utf-8')
         activation_key = hashlib.sha1(salt+username).hexdigest()
-        return self.create(user=user, \
+        #surfConnextID = user.surfConnextID
+        return self.create(user=user, surfConnextID=user.surfConnextID, \
                            activation_key=activation_key)
 
     def delete_expired_users(self):
@@ -183,7 +195,7 @@ class RegistrationProfile(models.Model):
     ACTIVATED = u"ALREADY_ACTIVATED"
 
     user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
-    external_id = models.CharField(_('external id'), max_length=75)
+    surfConnextID = models.CharField(_('surfConnextID'), max_length=75)
     activation_key = models.CharField(_('activation key'), max_length=40)
 
     objects = RegistrationManager()
