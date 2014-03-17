@@ -30,16 +30,18 @@ class RegistrationForm(forms.Form):
 
     required_css_class = 'required'
 
+    external_id = None
     #username = forms.RegexField(regex=r'^[\w.@+-]+$', max_length=30,\
     #        label=_("Username"), error_messages={'invalid':\
     #        _("This value may contain only letters, numbers and"+\
     #        " @/./+/-/_ characters.")})
     username = forms.RegexField(regex=r'^[0-9]{7,9}$', label=_("UvANetID"), \
             error_messages={'invalid':\
-            _("A UvANetID consists of zeven or nine digits.")})
+            _("A UvANetID consists of zeven to nine digits.")})
     first_name = forms.CharField(label=_("First Name"))
     last_name = forms.CharField(label=_("Last Name"))
-    external_id = forms.CharField(label=_("external id"), max_length=75)
+    external_id = forms.CharField(label=_("external id"), max_length=75, \
+            required=False)
     email = forms.EmailField(label=_("E-mail"))
     password1 = forms.CharField(widget=forms.PasswordInput,label=_("Password"))
     password2 = forms.CharField(widget=forms.PasswordInput,\
