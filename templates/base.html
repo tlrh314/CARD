@@ -7,18 +7,16 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="CARD description">
-    <meta name="author" content="Timo Halbesma">
-    <meta name="keywords" content="">
+    <meta name="description" content="CARD is the attendance registration
+    website for the FNWI">
+    <meta name="author" content="Timo Halbesma BSc">
+    <meta name="keywords" content="Aanwezigheidsregistratie, Universiteit van Amsterdam, Aanwezigheidsbeheer, CARD, Oriëntatie Natuur- en Sterrenkunde, Bachelor Natuur- en Sterrenkunde, UvA, FNWI, Science Park Amsterdam, UvA Grassroots">
     <link rel="shortcut icon" href="favicon.ico">
 
     <title>{% block title %}CARD{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="navbar-fixed-top.css" rel="stylesheet">
     </head>
 
     <body>
@@ -44,6 +42,7 @@
           {% if user.is_authenticated %}
           <ul class="nav navbar-nav">
             <li><a href="{% url 'polls:index'  %}">Polls</a></li>
+            <li><a href="{% url 'education:index'  %}">Courses</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">

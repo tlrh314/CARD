@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}CARD - Courses{% endblock %}
+
+{% block content %}
+<h1>Courses</h1>
+{% if latest_course_list %}
+<ul>
+  {% for course in latest_course_list %}
+  <li><a href="{% url 'education:detail' course.id %}">{{ course.name }}</a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No courses are available.</p>
+{% endif %}
+{% endblock %}
