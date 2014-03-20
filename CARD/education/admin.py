@@ -8,25 +8,24 @@ class LectureInline(admin.StackedInline):
 class CourseAdmin(admin.ModelAdmin):
     fieldsets = [
         ('Course name', {'fields': (['name'], ['dataNoseID'], \
-                ['catalogID'], ['description'], ['coordinator'])}),
-    ]
+                ['catalogID'], ['description'], ['coordinator'], ['student'])}),
+        ]
     list_display = ('name', 'dataNoseID', 'catalogID', 'description', \
-            'coordinator')
+            'coordinator', 'created', 'updated')
     list_filter = ['name']
     search_fields = ['name']
     inlines = [LectureInline]
 
+    def has_add_permission(self, request):
+        return request.user.is_superuser or \
+                request.user.groups.filter(name='Coordinator').exists()
 
-#class LectureAdmin(admin.ModelAdmin):
-#    fieldsets = [
-#        (None,               {'fields': ['course']}),
-#        ('Lecture information', {'fields': (['date'], ['lecturers'],\
-#                ['abstract'], ['classification']) })
-#    ]
-#    list_display = ('course', 'date', 'lecturers', 'abstract', \
-#            'classification')
-#    list_filter = ['date']
-#    search_fields = ['date']
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser or \
+                request.user.groups.filter(name='Coordinator').exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser or \
+                request.user.groups.filter(name='Coordinator').exists()
 
 admin.site.register(Course, CourseAdmin)
-#admin.site.register(Lecture, LectureAdmin)

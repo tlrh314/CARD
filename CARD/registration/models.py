@@ -4,7 +4,7 @@ import random
 import re
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.db import models
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -85,8 +85,9 @@ class RegistrationManager(models.Manager):
         new_user.first_name = first_name
         new_user.last_name = last_name
         new_user.is_active = False
+        new_user.surfConnextID = ''
+        new_user.groups.add(Group.objects.get(name='Student'))
         new_user.save()
-
         registration_profile = self.create_profile(new_user)
 
         if send_email:
@@ -102,6 +103,7 @@ class RegistrationManager(models.Manager):
         new_user.last_name = last_name
         new_user.surfConnextID = surfConnextID
         new_user.is_active = True
+        new_user.groups.add(Group.objects.get(name='Student'))
         new_user.save()
         registration_profile = self.create_profile(new_user)
 
@@ -122,7 +124,6 @@ class RegistrationManager(models.Manager):
         if isinstance(username, unicode):
             username = username.encode('utf-8')
         activation_key = hashlib.sha1(salt+username).hexdigest()
-        #surfConnextID = user.surfConnextID
         return self.create(user=user, surfConnextID=user.surfConnextID, \
                            activation_key=activation_key)
 
@@ -201,8 +202,8 @@ class RegistrationProfile(models.Model):
     objects = RegistrationManager()
 
     class Meta:
-        verbose_name = _('registration profile')
-        verbose_name_plural = _('registration profiles')
+        verbose_name = _('Profile')
+        verbose_name_plural = _('Profiles')
 
     def __unicode__(self):
         return u"Registration information for %s" % self.user
