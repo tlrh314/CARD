@@ -3,11 +3,11 @@ from education.models import Course, Lecture
 
 class LectureInline(admin.StackedInline):
     model = Lecture
-    extra = 1
+    extra = 0
 
 class CourseAdmin(admin.ModelAdmin):
     fieldsets = [
-        ('Course name', {'fields': (['name'], ['dataNoseID'], \
+        ('Course information', {'fields': (['name'], ['dataNoseID'], \
                 ['catalogID'], ['description'], ['coordinator'], ['student'])}),
         ]
     list_display = ('name', 'dataNoseID', 'catalogID', 'description', \

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}CARD - Courses/{{ course.name}}{% endblock %}
+
+{% block content %}
+<h1>{{ course.name}}</h1>
+<b>Studiegidsnummer</b><br>{{ course.catalogID }} <br><br>
+<b>Coordinator</b><br>{{ course.coordinator }} <br><br>
+{# course.description|safe #}
+{% for lecture in course.lecture_set.all %}
+<ul>
+  <li>{{ lecture.course }}</li>
+  <li>{{ lecture.date }}</li>
+  <li>{{ lecture.lecturers }}</li>
+  <li>{{ lecture.abstract }}</li>
+  {% for abbreviation, fullname in lecture.TYPES %}
+  {% if abbreviation == lecture.classification %}
+  <li>{{ fullname}}</li>
+  {% endif %}
+  {% endfor %}
+</ul>
+{% endfor %}
+{% endblock %}

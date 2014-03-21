@@ -8,7 +8,6 @@ class IndexView(generic.ListView):
     context_object_name = 'latest_course_list'
 
     def get_queryset(self):
-        """Return the last five published polls."""
         # all students for a course
         #course = Course.objects.get(pk=xxxx)
         #course.student.all()

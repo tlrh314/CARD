@@ -1,22 +1,78 @@
 {% extends "base.html" %}
+{% load set_var  %}
 {% block title %}CARD - Courses/{{ course.name}}{% endblock %}
 
 {% block content %}
-<h1>{{ course.name}}</h1>
-<b>Studiegidsnummer</b><br>{{ course.catalogID }} <br><br>
-<b>Coordinator</b><br>{{ course.coordinator }} <br><br>
-{# course.description|safe #}
-{% for lecture in course.lecture_set.all %}
-<ul>
-  <li>{{ lecture.course  }}</li>
-  <li>{{ lecture.date }}</li>
-  <li>{{ lecture.lecturers }}</li>
-  <li>{{ lecture.abstract }}</li>
-  {% for abbreviation, fullname in lecture.TYPES %}
-  {% if abbreviation == lecture.classification %}
-    <li>{{ fullname}}</li>
-  {% endif %}
+<h1> {{ course.name }} </h1>
+{# Ugly fix? This should perhaps in view rather than in template? #}
+{% set enrolled = 'False' %}
+{% for id in course.student.all %}
+{% ifequal user.username id.username %}
+  {% set enrolled = 'True' %}
+  <div class="panel-group" id="information">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+            Course Information
+          </a>
+        </h3>
+      </div>
+    <div id="collapseOne" class="panel-collapse collapse">
+      <div class="panel-body">
+        <b>Studiegidsnummer</b><br>{{ course.catalogID }} <br><br>
+        <b>Coordinator</b><br>{{ course.coordinator }} <br><br>
+        {{ course.description|safe }}
+        {{ break }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel-group" id="lectures">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">
+        <a data-toggle="collapse" data-parent="#lectures" href="#collapseTwo">
+          Lectures
+        </a>
+      </h3>
+    </div>
+  <div id="collapseTwo" class="panel-collapse collapse in">
+    <div class="panel-body">
+      <table class="table">
+        <tr><td><b>Date</b></td><td><b>Lecturers</b></td><td><b>Title</b></td>
+            <td><b>Type</b></td><td><b>Status</b></td>
+        {% for lecture in course.lecture_set.all %}
+          <tr><td>{{ lecture.date }}</td>
+          <td>{{ lecture.lecturers }}</td>
+          <td>{{ lecture.abstract }}</td>
+          {% for abbreviation, fullname in lecture.TYPES %}
+            {% if abbreviation == lecture.classification %}
+              <td>{{ fullname }}</td>
+            {% endif %}
+          {% endfor %}
+          {% set status = 'Absent' %}
+          {% for present in lecture.attending.all %}
+            {% ifequal present.username user.username %}
+              {% set status = 'Present' %}
+              <td><span class="label label-success">{{ status }}<span></td>
+              {{ break }}
+            {% endifequal %}
+          {% endfor %}
+          {% ifequal status 'Absent' %}
+            <td><span class="label label-danger">{{ status }}</span></td>
+          {% endifequal %}
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+    {% endifequal %}
   {% endfor %}
-</ul>
-{% endfor %}
+
+{% ifequal enrolled 'False' %}
+<p> You are currently not enrolled for {{ course.name }} </p>
+{% endifequal %}
+
 {% endblock %}

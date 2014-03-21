@@ -54,9 +54,12 @@ class Lecture(models.Model):
     classification = models.CharField(_('Type'), max_length=1, choices=TYPES)
     created = models.DateTimeField(auto_now = True)
     updated = models.DateTimeField(auto_now_add = True)
+    attending = models.ManyToManyField('Student', null = True, blank = True, \
+            related_name = _('LectureStudents'))
 
     def __unicode__(self):
-        return self.course
+        return u'%s on %s' % (self.course, self.date.strftime("%s at %sh" % \
+            ("%B %d, %Y", "%H:%M")))
 
     class Meta:
         verbose_name = ('Lecture')
@@ -68,3 +71,5 @@ class Lecture(models.Model):
                 self.classification}
         return data
 
+  #def register_as_attending(self, student_id):
+  #    self.attending +=
