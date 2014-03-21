@@ -13,7 +13,7 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">
-              <a data-toggle="collapse" data-parent="#accordion"
+              <a data-toggle="collapse" data-parent="#information"
                   href="#collapseOne">
                 Course Information
               </a>
@@ -58,7 +58,7 @@
                   {% for present in lecture.attending.all %}
                     {% ifequal present.username user.username %}
                       {% set status = 'Present' %}
-                      <td><span class="label label-success">{{ status }}<span></td>
+                      <td><span class="label label-success">{{ status }}</span></td>
                       {{ break }}
                     {% endifequal %}
                   {% endfor %}
@@ -70,6 +70,7 @@
             </div>
           </div>
          </div>
+      </div>
     {% endifequal %}
   {% endfor %}
 

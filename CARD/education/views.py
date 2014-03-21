@@ -1,10 +1,11 @@
 from django.shortcuts import render
 from django.views import generic
+from django.contrib.auth.decorators import permission_required
 
 from education.models import Student, Course, Lecture
 
 class IndexView(generic.ListView):
-    template_name = 'education/index.html'
+    template_name = 'education/student_index.html'
     context_object_name = 'latest_course_list'
 
     def get_queryset(self):
@@ -17,4 +18,19 @@ class IndexView(generic.ListView):
 
 class DetailView(generic.DetailView):
     model = Course
-    template_name = 'education/detail.html'
+    template_name = 'education/student_detail.html'
+
+class AdminIndexView(generic.ListView):
+    template_name = 'education/admin_index.html'
+    context_object_name = 'all_course_list'
+
+    def get_queryset(self):
+        return Course.objects.all
+
+class AdminDetailView(generic.DetailView):
+    model = Course
+    template_name = 'education/admin_detail.html'
+
+  #def get_queryset(self):
+    #course = Course.objects.get(pk=xxx)
+    #return course.student.all()

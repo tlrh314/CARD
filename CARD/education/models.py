@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 
 import datetime
 
-
 class StudentManager(models.Manager):
     def get_query_set(self):
         return self.filter(groups__name='Student')
@@ -47,10 +46,10 @@ class Lecture(models.Model):
     date = models.DateTimeField(_('Date'))
     lecturers = models.CharField(_('Lecturers'), max_length=150)
     abstract = models.TextField(_('Abstract'))
-    TYPES = (('I', _('Informatie studie')),
-            ('A', _('Alumnilezing')),
-            ('R', _('Rondleiding')),
-            ('N', _('Normaal')))
+    TYPES = (('I', _('Programme Information')),
+            ('A', _('Alumni Lecture')),
+            ('T', _('Guided Tour')),
+            ('R', _('Regular')))
     classification = models.CharField(_('Type'), max_length=1, choices=TYPES)
     created = models.DateTimeField(auto_now = True)
     updated = models.DateTimeField(auto_now_add = True)

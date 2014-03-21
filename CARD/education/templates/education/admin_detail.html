@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load set_var  %}
+{% block title %}CARD - Courses Admin/{{ course.name}}{% endblock %}
+
+{% block content %}
+{% if user.is_superuser %}
+  <h1> {{ course.name }} </h1>
+  {# Ugly fix? This should perhaps in view rather than in template? #}
+    <div class="panel-group" id="information">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">
+            <a data-toggle="collapse" data-parent="#information"
+                href="#collapseOne">
+              Course Information
+            </a>
+          </h3>
+        </div>
+        <div id="collapseOne" class="panel-collapse collapse">
+          <div class="panel-body">
+            <b>Studiegidsnummer</b><br>{{ course.catalogID }} <br><br>
+            <b>Coordinator</b><br>{{ course.coordinator }} <br><br>
+            {{ course.description|safe }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-group" id="lectures">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <a data-toggle="collapse" data-parent="#lectures"
+                  href="#collapseTwo">
+                Lectures
+              </a>
+            </h3>
+          </div>
+          <div id="collapseTwo" class="panel-collapse collapse">
+            <div class="panel-body">
+              <table class="table">
+                <tr><td><b>Date</b></td><td><b>Lecturers</b></td>
+                <td><b>Title</b></td><td><b>Type</b></td>
+                {% for lecture in course.lecture_set.all %}
+                  <tr><td>{{ lecture.date }}</td>
+                  <td>{{ lecture.lecturers }}</td>
+                  <td>{{ lecture.abstract }}</td>
+                  {% for abbreviation, fullname in lecture.TYPES %}
+                    {% if abbreviation == lecture.classification %}
+                      <td>{{ fullname }}</td>
+                    {% endif %}
+                  {% endfor %}
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-group" id="students">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <a data-toggle="collapse" data-parent="#students"
+                  href="#collapseThree">
+                Students
+              </a>
+            </h3>
+          </div>
+          <div id="collapseThree" class="panel-collapse collapse in">
+            <div class="panel-body">
+              <table class="table">
+                <tr><td><b>Student ID</b></td>
+                  {% for lecture in course.lecture_set.all|slice:":1" %}
+                    {% for abbreviation, fullname in lecture.TYPES %}
+                    <td><b>{{ fullname }}</b></td>
+                    {% endfor %}
+                  {% endfor %}
+                  <td><b>Total</b></td>
+                {% for student in course.student.all%}
+                  <tr><td>{{ student.username}}</td>
+                    {# To implement: student attendance count per course #}
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+{% else %}
+  <p> You have no permission to view this page </p>
+{% endif %}
+{% endblock %}

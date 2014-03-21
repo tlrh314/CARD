@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}CARD - Courses Admin{% endblock %}
+
+{% block content %}
+{% if user.is_superuser %}
+  <h1>Courses Admin</h1>
+  {% if all_course_list %}
+  <ul>
+    {% for course in all_course_list %}
+      <li><a href="{% url 'education:admin_detail' course.id %}">
+        {{ course.name }}
+      </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+    <p>No courses are available.</p>
+  {% endif %}
+{% else %}
+  <p> You have no permission to view this page </p>
+{% endif %}
+{% endblock %}
