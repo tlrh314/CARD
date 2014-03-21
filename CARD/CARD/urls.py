@@ -10,6 +10,7 @@ urlpatterns = patterns('',
     url(r'^accounts/', include('django.contrib.auth.urls')),
     url(r'ivoauth/callback', 'registration.views.ivoauth_callback'),
     url(r'ivoauth/$', 'registration.views.ivoauth', name='ivoauth'),
+    url(r'^logout', 'registration.views.logout_user', name='logout'),
     url(r'^polls/', include('polls.urls', namespace="polls")),
     url(r'^courses/', include('education.urls', namespace="education")),
 )

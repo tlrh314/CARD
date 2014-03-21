@@ -8,7 +8,7 @@ from django.views.generic.edit import FormView
 #from django.views import generic
 from django.http import HttpResponse, HttpResponseRedirect, \
     HttpResponseBadRequest, HttpResponseNotFound
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, logout, authenticate
 
 from registration import signals
 from registration.forms import RegistrationForm
@@ -228,3 +228,7 @@ def ivoauth_callback(request):
     return HttpResponseRedirect('/')
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
+
+def logout_user(request):
+    logout(request)
+    return HttpResponseRedirect('https://auth.innovatievooronderwijs.nl/logout')
