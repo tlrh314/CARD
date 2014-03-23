@@ -13,6 +13,12 @@ class Student(User):
     class Meta:
         proxy = True
 
+    #total_attendance = dict()
+
+    #for TYPE in Lecture.TYPES:
+    #    total_attendance[TYPE] = 0
+
+
 class Course(models.Model):
     name = models.CharField(_('Name'), max_length=100, unique=True)
     #slug = models.SlugField()
@@ -40,6 +46,12 @@ class Course(models.Model):
                 'catalogID': self.catalogID, 'description': self.description, \
                 'coordinator': self.coordinator}
         return data
+
+    #def calculate_attendance(self):
+        #for lecture in Lecture.course(self.id)
+        #    for student in lecture.attending.all:
+                #student.total_attendance[lecture.classification] += 1
+
 
 class Lecture(models.Model):
     course = models.ForeignKey(Course)

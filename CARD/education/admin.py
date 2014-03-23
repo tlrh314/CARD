@@ -1,11 +1,17 @@
 from django.contrib import admin
 from education.models import Course, Lecture
 
+# https://stackoverflow.com/questions/8043881/django-admin-manytomanyfield
+class LectureAdmin(admin.ModelAdmin):
+    pass
+
 class LectureInline(admin.StackedInline):
     model = Lecture
+    filter_horizontal = ('attending',)
     extra = 0
 
 class CourseAdmin(admin.ModelAdmin):
+    filter_horizontal = ('student',)
     fieldsets = [
         ('Course information', {'fields': (['name'], ['dataNoseID'], \
                 ['catalogID'], ['description'], ['coordinator'], ['student'])}),
@@ -29,3 +35,4 @@ class CourseAdmin(admin.ModelAdmin):
                 request.user.groups.filter(name='Coordinator').exists()
 
 admin.site.register(Course, CourseAdmin)
+admin.site.register(Lecture, LectureAdmin)
