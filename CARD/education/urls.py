@@ -1,11 +1,19 @@
-from django.conf.urls import patterns, url
+"""
+Backwards-compatible URLconf for existing django-registration
+installs; this allows the standard ``include('registration.urls')`` to
+continue working, but that usage is deprecated and will be removed for
+django-registration 1.0. For new installs, use
+``include('registration.backends.default.urls')``.
 
-from education import views
+"""
 
+import warnings
+
+warnings.warn("include('registration.urls') is deprecated; use include('registration.backends.default.urls') instead.",
+              DeprecationWarning)
+
+from registration.backends.default.urls import *
 urlpatterns = patterns('',
-    url(r'^$', views.IndexView.as_view(), name='index'),
-    url(r'^(?P<pk>\d+)/$', views.DetailView.as_view(),name='detail'),
-    url(r'^admin$', views.AdminIndexView.as_view(),name='admin_index'),
-    url(r'^admin/(?P<pk>\d+)/$',\
-      views.AdminDetailView.as_view(),name='admin_detail'),
+        url(r'^$', views.index, name='index'),
 )
+

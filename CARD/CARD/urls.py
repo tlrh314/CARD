@@ -12,6 +12,6 @@ urlpatterns = patterns('',
     url(r'ivoauth/$', 'registration.views.ivoauth', name='ivoauth'),
     url(r'^logout', 'registration.views.logout_user', name='logout'),
     url(r'^polls/', include('polls.urls', namespace="polls")),
-    url(r'^courses/', include('education.backends.default.urls', \
-            namespace="education")),
+    url(r'^courses/', include('education.backends.default.urls',\
+        namespace="education")),
 )

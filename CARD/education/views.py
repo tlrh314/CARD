@@ -1,7 +1,5 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import generic
-from django.contrib.auth.decorators import permission_required
-from django.views.generic.edit import FormView
 
 from registration.views import _RequestPassingFormView
 
@@ -50,7 +48,7 @@ class AttendanceView(_RequestPassingFormView):
     Base class for Student attendance registration views.
 
     """
-    disallowed_url = 'registration_disallowed'
+    disallowed_url = 'education:attendance_disallowed'
     form_class = AttendanceForm
     http_method_names = ['get', 'post', 'head', 'options', 'trace']
     success_url = None
@@ -58,18 +56,19 @@ class AttendanceView(_RequestPassingFormView):
 
     def dispatch(self, request, *args, **kwargs):
         """
-        Check that user signup is allowed before even bothering to
-        dispatch or do other processing.
-
+        Check that lecture attendance registration is allowed before even
+        bothering to dispatch or do other processing.
         """
-        if not self.registration_allowed(request):
+
+        if not self.attendance_allowed(request):
             return redirect(self.disallowed_url)
-        return super(RegistrationView, self).dispatch(request, *args, **kwargs)
+        return super(AttendanceView, self).dispatch(request, *args, **kwargs)
 
     def form_valid(self, request, form):
         # write to the database, also write to DataNose
-        new_user = self.register(request, **form.cleaned_data)
-        success_url = self.get_success_url(request, new_user)
+        #new_user = self.register(request, **form.cleaned_data)
+        #success_url = self.get_success_url(request, new_user)
+        success_url = self.get_success_url(request)
 
         # success_url may be a simple string, or a tuple providing the
         # full argument set for redirect(). Attempting to unpack it
@@ -80,7 +79,7 @@ class AttendanceView(_RequestPassingFormView):
         except ValueError:
             return redirect(success_url)
 
-    def registration_allowed(self, request):
+    def attendance_allowed(self, request):
         """
         Override this to enable/disable user registration, either
         globally or on a per-request basis.
@@ -96,5 +95,3 @@ class AttendanceView(_RequestPassingFormView):
 
         """
         raise NotImplementedError
-
-

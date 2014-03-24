@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block title %}{% trans "CARD - Courses/Lectures/Attendance Registration" %}{% endblock %}
+
+{% block content %}
+<h1> Lectures/Attendance Registration</h1>
+{% if user.is_superuser %}
+  <form action='' method="post" class="form-horizontal">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <button type="submit" class="btn btn-primary">
+      {% bootstrap_icon "star" %} Submit
+    </button>
+    {% endbuttons %}
+  </form>
+{% else %}
+  <p> You don't have permission to view this page</p>
+{% endif %}
+{% endblock %}
