@@ -38,8 +38,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrap3',
-    'polls',
     'registration',
+    'polls',
+    'education',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -91,8 +92,8 @@ STATIC_URL = '/static/'
 
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
-MEDIA_ROOT = 'CARD/site_media/'
-TEMPLATE_DIRS = 'templates/',
+MEDIA_ROOT = '/path/to/CARD/site_media/'
+TEMPLATE_DIRS = '/path/to/templates/',
 
 # Django-Registration settings
 # https://django-registration.readthedocs.org/en/latest/quickstart.html
@@ -130,6 +131,9 @@ IVOAUTH_URL="MyIvOAuthURL"
 AUTHENTICATION_BACKENDS = ('registration.auth_backend.PasswordlessAuthBackend', \
         'django.contrib.auth.backends.ModelBackend')
 
+# Settings for DataNose link
+DN_WEBSERVICE_URL="my-datanose-link-url"
+
 # Settings for django-bootstrap3.
 BOOTSTRAP3 = {
     'jquery_url': '//code.jquery.com/jquery.min.js',
@@ -145,40 +149,58 @@ BOOTSTRAP3 = {
 # If DEBUG=True, messages will be written to console. See
 # http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
+#LOGGING = {
+#    'version': 1,
+#    'disable_existing_loggers': False,
+#    'formatters': {
+#        'simple': {
+#            'format': '%(levelname)s %(message)s'
+#        },
+#    },
+#    'filters': {
+#        'require_debug_false': {
+#            '()': 'django.utils.log.RequireDebugFalse'
+#        }
+#    },
+#    'handlers': {
+#        'mail_admins': {
+#            'level': 'ERROR',
+#            'filters': ['require_debug_false'],
+#            'class': 'django.utils.log.AdminEmailHandler'
+#        },
+#        'console': {
+#            'level': 'DEBUG',
+#            'class': 'logging.StreamHandler',
+#            'formatter': 'simple'
+#        },
+#    },
+#    'loggers': {
+#        'search': {
+#            'handlers': ['console'],
+#            'level': 'DEBUG',
+#        },
+#        'django.request': {
+#            'handlers': ['mail_admins'],
+#            'level': 'ERROR',
+#            'propagate': True,
+#        },
+#    }
+#}
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'formatters': {
-        'simple': {
-            'format': '%(levelname)s %(message)s'
-        },
-    },
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
     'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        },
-        'console': {
+        'file': {
             'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'class': 'logging.FileHandler',
+            'filename': '/srv/ZoltaN/logs/debug.log',
         },
     },
     'loggers': {
-        'search': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        },
         'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
+            'handlers': ['file'],
+            'level': 'DEBUG',
             'propagate': True,
         },
-    }
+    },
 }
