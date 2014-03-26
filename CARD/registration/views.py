@@ -231,4 +231,4 @@ def ivoauth_callback(request):
 
 def logout_user(request):
     logout(request)
-    return HttpResponseRedirect('https://auth.innovatievooronderwijs.nl/logout')
+    return HttpResponseRedirect(IVOAUTH_TOKEN + "/logout")

@@ -29,8 +29,10 @@ urlpatterns = patterns('',
             TemplateView.as_view(template_name='education/attendance_closed.html'),\
                     name='attendance_disallowed'),
         url(r'^$', views.IndexView.as_view(), name='index'),
-        url(r'^(?P<pk>\d+)/$', views.DetailView.as_view(),name='detail'),
+        url(r'^(?P<course_pk>\d+)/$', views.CourseView.as_view(),name='course'),
+        url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/$', \
+                views.LectureView.as_view(),name='lecture'),
         url(r'^admin$', views.AdminIndexView.as_view(),name='admin_index'),
-        url(r'^admin/(?P<pk>\d+)/$',\
+        url(r'^admin/(?P<course_pk>\d+)/$',\
                 views.AdminDetailView.as_view(),name='admin_detail'),
         )

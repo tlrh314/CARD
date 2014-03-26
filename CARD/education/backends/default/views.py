@@ -2,13 +2,10 @@ from django.conf import settings
 from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
 
-from registration import signals
-from registration.models import RegistrationProfile
-from registration.views import ActivationView as BaseActivationView
-from registration.views import RegistrationView as BaseRegistrationView
+#from registration import signals
+from education.views import AttendanceView as BaseAttendanceView
 
-
-class AttendanceView(BaseRegistrationView):
+class AttendanceView(BaseAttendanceView):
     """
     A registration backend which follows a simple workflow:
 
@@ -47,7 +44,7 @@ class AttendanceView(BaseRegistrationView):
     fields and supported operations.
 
     """
-    def register(self, request, **cleaned_data):
+    def mark_as_attending(self, request, **cleaned_data):
         """
         Given a username, email address, first and last name, password,
         register a new user account, which will initially be inactive.
@@ -76,27 +73,24 @@ class AttendanceView(BaseRegistrationView):
             site = Site.objects.get_current()
         else:
             site = RequestSite(request)
+
         attending = username # Leture.LectureStudents append or something?
-        #new_user = RegistrationProfile.objects.create_inactive_user(username,\
-        #        email, password, first_name, last_name, surfConnextID, site)
-        #signals.user_registered.send(sender=self.__class__,\
-        #        user=new_user,request=request)
         return attending
 
-    def registration_allowed(self, request):
+    def attendance_allowed(self, request):
         """
         Indicate whether account registration is currently permitted,
-        based on the value of the setting ``REGISTRATION_OPEN``. This
+        based on the value of the setting ``ATTENDANCE_OPEN``. This
         is determined as follows:
 
-        * If ``REGISTRATION_OPEN`` is not specified in settings, or is
+        * If ``ATTENDANCE_OPEN`` is not specified in settings, or is
           set to ``True``, registration is permitted.
 
-        * If ``REGISTRATION_OPEN`` is both specified and set to
+        * If ``ATTENDANCE_OPEN`` is both specified and set to
           ``False``, registration is not permitted.
 
         """
-        return getattr(settings, 'ATTENDING_OPEN', True)
+        return getattr(settings, 'ATTENDANCE_OPEN', True)
 
     def get_success_url(self, request, user):
         """
@@ -104,4 +98,4 @@ class AttendanceView(BaseRegistrationView):
         user registration.
 
         """
-        return ('attendance_complete', (), {})
+        return ('education:attendance_complete', (), {})

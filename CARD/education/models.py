@@ -57,6 +57,7 @@ class Lecture(models.Model):
     course = models.ForeignKey(Course)
     date = models.DateTimeField(_('Date'))
     lecturers = models.CharField(_('Lecturers'), max_length=150)
+    #title = models.CharField(_('Title'), max_length=150)
     abstract = models.TextField(_('Abstract'))
     TYPES = (('I', _('Programme Information')),
             ('A', _('Alumni Lecture')),

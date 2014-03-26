@@ -22,9 +22,15 @@ class IndexView(generic.ListView):
         return student.StudentCourses.all()
         #return Course.objects.order_by('name')[:5]
 
-class DetailView(generic.DetailView):
+class CourseView(generic.DetailView):
     model = Course
-    template_name = 'education/student_detail.html'
+    pk_url_kwarg = 'course_pk'
+    template_name = 'education/student_course.html'
+
+class LectureView(generic.DetailView):
+    model = Lecture
+    pk_url_kwarg = 'lecture_pk'
+    template_name = 'education/student_lecture.html'
 
 class AdminIndexView(generic.ListView):
     template_name = 'education/admin_index.html'
@@ -66,9 +72,8 @@ class AttendanceView(_RequestPassingFormView):
 
     def form_valid(self, request, form):
         # write to the database, also write to DataNose
-        #new_user = self.register(request, **form.cleaned_data)
-        #success_url = self.get_success_url(request, new_user)
-        success_url = self.get_success_url(request)
+        attending_student  = self.mark_as_attending(request, **form.cleaned_data)
+        success_url = self.get_success_url(request, attending_student)
 
         # success_url may be a simple string, or a tuple providing the
         # full argument set for redirect(). Attempting to unpack it
@@ -87,7 +92,7 @@ class AttendanceView(_RequestPassingFormView):
         """
         return True
 
-    def register(self, request, **cleaned_data):
+    def mark_as_attending(self, request, **cleaned_data):
         """
         Implement user-registration logic here. Access to both the
         request and the full cleaned_data of the registration form is
