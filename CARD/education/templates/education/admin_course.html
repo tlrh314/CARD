@@ -44,7 +44,11 @@
                 {% for lecture in course.lecture_set.all %}
                   <tr><td>{{ lecture.date }}</td>
                   <td>{{ lecture.lecturers }}</td>
-                  <td>{{ lecture.abstract }}</td>
+                  <td>
+                    <a href="{% url 'education:admin_lecture' course.pk lecture.pk %}">
+                      {{ lecture.title }}
+                    </a>
+                  </td>
                   {% for abbreviation, fullname in lecture.TYPES %}
                     {% if abbreviation == lecture.classification %}
                       <td>{{ fullname }}</td>

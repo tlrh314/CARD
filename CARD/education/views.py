@@ -39,15 +39,19 @@ class AdminIndexView(generic.ListView):
     def get_queryset(self):
         return Course.objects.all
 
-class AdminDetailView(generic.DetailView):
+class AdminCourseView(generic.DetailView):
     model = Course
-    template_name = 'education/admin_detail.html'
+    pk_url_kwarg = 'course_pk'
+    template_name = 'education/admin_course.html'
 
   #def get_queryset(self):
     #course = Course.objects.get(pk=xxx)
     #return course.student.all()
 
-
+class AdminLectureView(generic.DetailView):
+    model = Lecture
+    pk_url_kwarg = 'lecture_pk'
+    template_name = 'education/admin_lecture.html'
 
 class AttendanceView(_RequestPassingFormView):
     """
