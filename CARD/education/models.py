@@ -20,8 +20,8 @@ class Student(User):
 
 
 class Course(models.Model):
-    name = models.CharField(_('Name'), max_length=100, unique=True)
-    #slug = models.SlugField()
+    name = models.CharField(_('Full Name'), max_length=100, unique=True)
+    slug = models.SlugField(_('Abbreviation'), max_length=15, unique=True)
     dataNoseID = models.DecimalField(_('DataNose ID'), max_digits=7,\
             decimal_places=0, unique=True)
     catalogID = models.CharField(_('Catalog Number'), max_length=10,\
@@ -41,23 +41,12 @@ class Course(models.Model):
         verbose_name = ('Course')
         verbose_name_plural = ('Courses')
 
-    def dataDict(self):
-        data = {'name': self.name, 'dataNoseID':self.dataNoseID, \
-                'catalogID': self.catalogID, 'description': self.description, \
-                'coordinator': self.coordinator}
-        return data
-
-    #def calculate_attendance(self):
-        #for lecture in Lecture.course(self.id)
-        #    for student in lecture.attending.all:
-                #student.total_attendance[lecture.classification] += 1
-
-
 class Lecture(models.Model):
     course = models.ForeignKey(Course)
     date = models.DateTimeField(_('Date'))
     lecturers = models.CharField(_('Lecturers'), max_length=150)
-    #title = models.CharField(_('Title'), max_length=150)
+    title = models.CharField(_('Full Title'), max_length=150)
+    slug = models.SlugField(_('Abbreviation'), max_length=15, unique = True)
     abstract = models.TextField(_('Abstract'))
     TYPES = (('I', _('Programme Information')),
             ('A', _('Alumni Lecture')),

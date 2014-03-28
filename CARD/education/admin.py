@@ -13,7 +13,7 @@ class LectureInline(admin.StackedInline):
 class CourseAdmin(admin.ModelAdmin):
     filter_horizontal = ('student',)
     fieldsets = [
-        ('Course information', {'fields': (['name'], ['dataNoseID'], \
+        ('Course information', {'fields': (['name'], ['slug'], ['dataNoseID'],\
                 ['catalogID'], ['description'], ['coordinator'], ['student'])}),
         ]
     list_display = ('name', 'dataNoseID', 'catalogID', 'description', \
