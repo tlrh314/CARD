@@ -162,8 +162,9 @@ class ActivationView(TemplateView):
 
 
 def ivoauth(request):
+    next_page = request.GET.get('next', '/')
     callback_url = str(request.build_absolute_uri("ivoauth/callback")) + \
-        "/?ticket={#ticket}"
+            "/?next=" + next_page + "&ticket={#ticket}"
     post_data = [('token', IVOAUTH_TOKEN), ('callback_url', callback_url)]
     try:
         content = json.loads(urlopen(IVOAUTH_URL + "/ticket",
@@ -182,6 +183,7 @@ def ivoauth(request):
 
 
 def ivoauth_callback(request):
+    next_page = request.GET.get('next', '/')
     ticket = request.GET.get("ticket", "")
     if not ticket:
         logger.error("no ticket")
@@ -225,10 +227,10 @@ def ivoauth_callback(request):
             logger.debug("Logged in user '{}'".format(user))
     else:
         logger.debug("Authentication failed")
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect(next_page)
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
 
 def logout_user(request):
     logout(request)
-    return HttpResponseRedirect(IVOAUTH_TOKEN + "/logout")
+    return HttpResponseRedirect(IVOAUTH_URL + "/logout")
