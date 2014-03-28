@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load set_var  %}
 {% block title %}
-  CARD - Courses/{{ course.name }}/{{ lecture.title }}
+  CARD - Courses/{{ lecture.course.name }}/{{ lecture.title }}
 {% endblock %}
 
 {% block content %}
@@ -11,7 +11,6 @@
     {% ifequal user.username id.username %}
       {% set enrolled = 'True' %}
       <h1> {{ lecture.course }} </h1>
-      <h2> {{ lecture.abstract }} </h2>
       <div class="panel-group" id="information">
         <div class="panel panel-default">
           <div class="panel-heading">
@@ -24,12 +23,13 @@
           </div>
           <div id="collapseOne" class="panel-collapse collapse in">
             <div class="panel-body">
+              <p> {{ lecture.abstract }} </p>
               <table class="table">
                 <tr><td><b>Date</b></td><td><b>Lecturers</b></td>
                 <td><b>Title</b></td><td><b>Type</b></td><td><b>Status</b></td>
                   <tr><td>{{ lecture.date }}</td>
                   <td>{{ lecture.lecturers }}</td>
-                  <td>{{ lecture.abstract }}</td>
+                  <td>{{ lecture.title }}</td>
                   {% for abbreviation, fullname in lecture.TYPES %}
                     {% if abbreviation == lecture.classification %}
                       <td>{{ fullname }}</td>
