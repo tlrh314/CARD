@@ -1,10 +1,11 @@
 {% extends "base.html" %}
-{% load set_var  %}
+{% load set_var %}
+{% load lookup %}
 {% block title %}CARD - Courses Admin/{{ course.name}}{% endblock %}
 
 {% block content %}
 {% if user.is_superuser %}
-  <h1> {{ course.name }} </h1>
+  <h1> {{ course.name }} Admin </h1>
   {# Ugly fix? This should perhaps in view rather than in template? #}
     <div class="panel-group" id="information">
       <div class="panel panel-default">
@@ -83,7 +84,12 @@
                   <td><b>Total</b></td>
                 {% for student in course.student.all%}
                   <tr><td>{{ student.username}}</td>
-                    {# To implement: student attendance count per course #}
+                  {% for lecture in course.lecture_set.all|slice:":1" %}
+                    {% for abbreviation, fullname in lecture.TYPES %}
+                      <td>{% lookup attendance student.username abbreviation %}</td>
+                    {% endfor %}
+                  {% endfor %}
+                  <td>{% lookup attendance student.username 'total' %}</td>
                 {% endfor %}
               </table>
             </div>

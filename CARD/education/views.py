@@ -2,11 +2,14 @@ from django.shortcuts import render, redirect
 from django.views import generic
 
 from registration.views import _RequestPassingFormView
+from registration.models import RegistrationProfile
+from django.http import HttpResponseForbidden
 
 from education.models import Student, Course, Lecture
 from education.forms import AttendanceForm
 
 import logging
+from collections import defaultdict
 
 logger = logging.getLogger('registration')
 
@@ -44,6 +47,21 @@ class AdminCourseView(generic.DetailView):
     pk_url_kwarg = 'course_pk'
     template_name = 'education/admin_course.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(AdminCourseView, self).get_context_data(**kwargs)
+        current_course = Course.objects.get(id=self.kwargs.get("course_pk"))
+        context['course'] = current_course
+        attendance = defaultdict(dict)
+        for student in current_course.student.all():
+            for abbreviation, fullname in Lecture.TYPES:
+                attendance[student.username][abbreviation] = 0
+            attendance[student.username]['total'] = 0
+            for lecture in student.LectureStudents.all():
+                attendance[student.username][lecture.classification] += 1
+                attendance[student.username]['total'] += 1
+        context['attendance'] = attendance
+
+        return context
   #def get_queryset(self):
     #course = Course.objects.get(pk=xxx)
     #return course.student.all()

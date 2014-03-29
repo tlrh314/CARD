@@ -10,6 +10,8 @@ from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from education.models import Lecture
+
 try:
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -285,4 +287,3 @@ class RegistrationProfile(models.Model):
                                    ctx_dict)
 
         self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-

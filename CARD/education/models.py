@@ -13,12 +13,6 @@ class Student(User):
     class Meta:
         proxy = True
 
-    #total_attendance = dict()
-
-    #for TYPE in Lecture.TYPES:
-    #    total_attendance[TYPE] = 0
-
-
 class Course(models.Model):
     name = models.CharField(_('Full Name'), max_length=100, unique=True)
     slug = models.SlugField(_('Abbreviation'), max_length=15, unique=True)
@@ -65,12 +59,3 @@ class Lecture(models.Model):
     class Meta:
         verbose_name = ('Lecture')
         verbose_name_plural = ('Lectures')
-
-    def dataDict(self):
-        data = {'course': self.course, 'date': self.date, 'lecturers':\
-                self.lecturers, 'abstract': self.abstract, 'classification':\
-                self.classification}
-        return data
-
-  #def register_as_attending(self, student_id):
-  #    self.attending +=
