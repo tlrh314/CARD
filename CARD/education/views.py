@@ -13,6 +13,8 @@ from collections import defaultdict
 
 logger = logging.getLogger('registration')
 
+LECTURES_REQUIRED = 25
+
 class IndexView(generic.ListView):
     template_name = 'education/student_index.html'
     context_object_name = 'latest_course_list'
@@ -29,6 +31,30 @@ class CourseView(generic.DetailView):
     model = Course
     pk_url_kwarg = 'course_pk'
     template_name = 'education/student_course.html'
+
+    def get_context_data(self, **kwargs):
+        # Initialize the context and set up the current_course.
+        context = super(CourseView, self).get_context_data(**kwargs)
+        current_course = Course.objects.get(id=self.kwargs.get("course_pk"))
+        context['course'] = current_course
+
+        # Initialize integer that holds the total attendance count.
+        progress = 0
+        # for student in current_course.student.all():
+
+        # Calculate the attendance for all lectures in this course.
+        for lecture in Lecture.objects.filter(course_id=current_course.id):
+            for attending in lecture.attending.all():
+                context['lecture'] = attending
+                if self.request.user.username == attending.username:
+                    progress += 1
+        context['visited'] = progress
+        context['total_lectures'] = LECTURES_REQUIRED
+        # Calculate percentage of attended lectures with respect # required.
+        progress = 100*float(progress)/LECTURES_REQUIRED
+        context['progress'] = progress
+
+        return context
 
 class LectureView(generic.DetailView):
     model = Lecture
@@ -48,17 +74,24 @@ class AdminCourseView(generic.DetailView):
     template_name = 'education/admin_course.html'
 
     def get_context_data(self, **kwargs):
+        # Initialize the context and set up the current_course.
         context = super(AdminCourseView, self).get_context_data(**kwargs)
         current_course = Course.objects.get(id=self.kwargs.get("course_pk"))
         context['course'] = current_course
+
+        # Initialize 2D array with keys UvANetID and type of Lecture.
         attendance = defaultdict(dict)
         for student in current_course.student.all():
             for abbreviation, fullname in Lecture.TYPES:
                 attendance[student.username][abbreviation] = 0
             attendance[student.username]['total'] = 0
-            for lecture in student.LectureStudents.all():
-                attendance[student.username][lecture.classification] += 1
-                attendance[student.username]['total'] += 1
+
+            # Calculate the attendance for all lectures in this course.
+            for lecture in Lecture.objects.filter(course_id=current_course.id):
+                if student in lecture.attending.all():
+                    context['classification'] = lecture.classification
+                    attendance[student.username][lecture.classification] += 1
+                    attendance[student.username]['total'] += 1
         context['attendance'] = attendance
 
         return context

@@ -40,7 +40,7 @@
               </a>
             </h3>
           </div>
-          <div id="collapseTwo" class="panel-collapse collapse in">
+          <div id="collapseTwo" class="panel-collapse collapse">
             <div class="panel-body">
               <table class="table">
                 <tr><td><b>Date</b></td><td><b>Lecturers</b></td>
@@ -73,7 +73,29 @@
               </table>
             </div>
           </div>
-         </div>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <a data-toggle="collapse" data-parent="#lectures"
+                  href="#collapseThree">
+                Progress
+              </a>
+            </h3>
+          </div>
+          <div id="collapseThree" class="panel-collapse collapse in">
+            <div class="panel-body">
+              <center>{{visited}}/{{total_lectures}} ({{progress}}%)</center>
+              <div class="progress progress-striped active">
+                <div class="progress-bar progress-bar-success"  role="progressbar"
+                      aria-valuenow="{{ progress }}" aria-valuemin="0"
+                      aria-valuemax="100" style="width: {{ progress }}%">
+                  <span class="sr-only">{{ progress }}% Complete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     {% endifequal %}
   {% endfor %}

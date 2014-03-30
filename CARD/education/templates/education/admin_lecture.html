@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load set_var %}
-{% load lookup %}
 {% block title %}CARD - Courses Admin/{{ lecture.course.name}}/Lectures/{{ lecture.title }}{% endblock %}
 
 {% block content %}
@@ -55,10 +54,12 @@
               {% for student in lecture.course.student.all%}
                 <tr><td>{{ student.username}}</td>
                 {% set status = 'Absent' %}
-                {% if student.username in lecture.attending %}
-                  {% set status = 'Present' %}
-                  <td><span class="label label-success">{{ status }}</span></td>
-                {% endif %}
+                {% for attending in lecture.attending.all %}
+                  {% ifequal student.username attending.username %}
+                    {% set status = 'Present' %}
+                    <td><span class="label label-success">{{ status }}</span></td>
+                  {% endifequal %}
+                {% endfor %}
                 {% ifequal status 'Absent' %}
                   <td><span class="label label-danger">{{ status }}</span></td>
                 {% endifequal %}
