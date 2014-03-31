@@ -22,6 +22,7 @@ class Course(models.Model):
             unique=True)
     description = models.TextField(_('Description'))
     coordinator = models.CharField(_('Coordinator'), max_length=100)
+    # change student to enrolled?
     student = models.ManyToManyField('Student', null = True, blank = True, \
             related_name = _('StudentCourses'))
     #tutor = models.ManyToManyField('Tutor', null = True, blank = True, related_name = _('Tutor courses'))
@@ -42,6 +43,7 @@ class Lecture(models.Model):
     title = models.CharField(_('Full Title'), max_length=150)
     slug = models.SlugField(_('Abbreviation'), max_length=15, unique = True)
     abstract = models.TextField(_('Abstract'))
+    # Move TYPES to Settings.
     TYPES = (('I', _('Programme Information')),
             ('A', _('Alumni Lecture')),
             ('T', _('Guided Tour')),

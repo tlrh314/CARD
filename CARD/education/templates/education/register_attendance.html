@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% block title %} CARD - Register Attendance{% endblock %}
+
+{% block content %}
+{% if user.is_superuser %}
+  <h1> Register Attendance </h1>
+  {{ lecture }}
+  <form action='' method="post" class="form" role="form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <input type="hidden" name="lecture_pk" value="{{ lecture }}"/>
+    <button type="submit" class="btn btn-primary">
+      {% bootstrap_icon "star" %} is attending
+    </button>
+    {% endbuttons %}
+  </form>
+{% else %}
+  <p> You have no permission to view this page </p>
+{% endif %}
+
+{% endblock %}

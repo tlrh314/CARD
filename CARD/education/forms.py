@@ -17,71 +17,106 @@ from CARD.settings import DN_WEBSERVICE_URL
 
 logger = logging.getLogger('education')
 
-class AttendanceForm(forms.Form):
+class RegisterAttendanceForm(forms.Form):
     """
-    Form for registering a student as attending a Lecture
-
-    Validates that the requested Student is enrolled for the Course.
-
-    If the Student is not yet in the database, the student should be added.
-
-    Subclasses should feel free to add any additional validation they
-    need, but should avoid defining a ``save()`` method -- the actual
-    saving of collected user data is delegated to the active
-    registration backend.
-
+    Form to add UvANetID (-> Student.username) to Lecture.attending.
+    Valdiation requires:
+        if UvANetID exists:
+            if UvANetID in Course.Students.all(): add to Lecture.attending
+        elif requested Student is enrolled for the Course at DataNose:
+            create Student; surfConnextID = None
+            add Student to Course.Student
+            add to Lecture.Attending
+        else: raise forms.ValueError
     """
 
     required_css_class = 'required'
 
-    username = forms.RegexField(regex=r'^[\w]+$', label=_("UvANetID"),\
+    UvANetID = forms.RegexField(regex=r'^[\w]+$', label=_("UvANetID"),\
             max_length=10, error_messages={'invalid': "This field may"+\
             " contain only letters and numbers."})
+    # Using Lecture class, we can and Lecture.course, thus, Course.student
+    lecture_pk = forms.CharField(widget=forms.HiddenInput())
 
-    def user_exists(self):
-        """
-        Validate that the username is alphanumeric and exists in database,
-        also check if the user is enrolled on DataNose for the course.
+    def clean(self):
+        lecture_pk = self.cleaned_data['lecture_pk']
+        lecture, student = None, None
+        if not lecture_pk:
+            raise forms.ValidationError("Error: lecture_pk not provided.")
+        try:
+            lecture = Lecture.objects.get(id=lecture_pk)
+        except Lecture.DoesNotExist:
+            raise forms.ValidationError(
+                    _('Lecture %(pk)s does not exist'),
+                    code = 'invalid',
+                    params={'pk': lecture_pk},
+                    )
+        # The passed parameters are valid; now handle registering attendance.
+        try:
+            student = Student.objects.get(\
+                    username__iexact=self.cleaned_data['UvANetID'])
+            # The Lecture exists, therefore the Course exists.
+            course = Course.objects.get(id=lecture.course.pk)
+            if course in student.StudentCourses.all():
+                if student in lecture.attending.all():
+                    raise forms.ValidationError(
+                             _('%(UvANetID)s is already attending %(lecture)s'),
+                             code='invalid',
+                             params={'UvANetID': student.username,\
+                                     'lecture' : lecture },
+                             )
+                else:
+                    lecture.attending.add(student)
+                    lecture.save()
+        except Student.DoesNotExist:
+            if self.datanose_enrolled(self.cleaned_data['UvANetID'], course):
+                # create Student; surfConnextID = None
+                # add Student to Course.Student
+                # add to Lecture.Attending
+                raise forms.ValidationError(
+                        _('%(UvANetID)s enrolled for %(course)s at DN'),
+                        code = 'invalid',
+                        params = {'UvANetID': student.username,\
+                                'course': course },
+                        )
+            else:
+                raise forms.ValidationError(
+                        _('%(UvANetID)s not enrolled for %(course)s'),
+                        code = 'invalid',
+                        params = {'UvANetID': student.username,\
+                                'course': course },
+                        )
 
-        """
-        existing = Student.objects.filter(username__iexact=\
-                self.cleaned_data['username'])
-        post_data = [('courseID', xxxx), ('studentID', yyyy)]
+    def datanose_enrolled(self, UvANetID, course):
+        post_data = [('courseID', course.dataNoseID), ('studentID', UvANetID)]
 
         try:
             # http://pastebin.com/8ZrdzNwT
-            url = DN_WEBSERVICE_URL + "/enrolment" + urlencode(post_data)
+            url = DN_WEBSERVICE_URL + '/enrolment' + urlencode(post_data)
             result = urlfetch.fetch(url,'','get');
             dom = minidom.parseString(result.content)
             json = simplejson.load(json)
             #content = simplejson.load(minidom.parseString(\
-            #        urlopen(DN_WEBSERVICE_URL + "/enrolment", \
+            #        urlopen(DN_WEBSERVICE_URL + '/enrolment', \
             #        urlencode(post_data)).read().content)
         except HTTPError:
-            logger.error("Invalid url")
+            logger.error('Invalid url')
             return HttpResponseBadRequest()
 
-        if content["boolean"] == "true":
-            logger.debug("DataNose Webservice request successful: "\
-                    +str(xxxx)+" enrolled for "+str(yyyy))
+        if content['boolean'] == 'true':
+            logger.debug('DataNose Webservice request successful: '\
+                    + str(UvANetID) + ' enrolled for ' + str(course))
             enrolled = True
-        elif content["boolean"] == "false":
-            logger.debug("DataNose Webservice request successful: "\
-                    +str(xxxx)+" not enrolled for "+str(yyyy))
+        elif content['boolean'] == 'false':
+            logger.debug('DataNose Webservice request successful: '\
+                    + str(UvANetID)+ ' not enrolled for '+str(course))
             enrolled = False
         else:
-            logger.debug("DataNose Webservice request failed!")
+            logger.debug('DataNose Webservice request failed!')
             return HttpResponseBadRequest()
 
         if not enrolled:
             raise forms.ValidationError(_("This Student is not enrolled "+\
                     "for this course"))
-        elif not existing.exists():
-            logger.debug(str(xxxx)+" is not yet in database.")
-            #try:
-            #    # create user
-            #    logger.debug(str(xxxx)+" has been added to database.")
-            #except bla:
-            #    logger.debug(str(xxxx)+" adding to database failed")
-        else:
-            return self.cleaned_data['username']
+
+        return False
