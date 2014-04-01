@@ -4,14 +4,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from education.models import Course, Lecture, Student
 
-import json
 import logging
 
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError, build_opener
-
-from xml.dom import minidom
-#from django.utils import simplejson as json
 
 from CARD.settings import DN_WEBSERVICE_URL
 
@@ -34,12 +30,19 @@ class RegisterAttendanceForm(forms.Form):
 
     UvANetID = forms.RegexField(regex=r'^[\w]+$', label=_("UvANetID"),\
             max_length=10, error_messages={'invalid': "This field may"+\
-            " contain only letters and numbers."})
+            " contain at most 10 alphanumeric characters."})
     # Using Lecture class, we can and Lecture.course, thus, Course.student
     lecture_pk = forms.CharField(widget=forms.HiddenInput())
 
     def clean(self):
-        lecture_pk = self.cleaned_data['lecture_pk']
+        # Fixed the issue that clean_<field> does not raise errors until after
+        # clean has returned: check if UvANetID is in cleaned_data.
+        cleaned_data = super(RegisterAttendanceForm, self).clean()
+        try:
+            UvANetID = cleaned_data['UvANetID']
+        except KeyError:
+            return cleaned_data
+        lecture_pk = cleaned_data['lecture_pk']
         coure, lecture, student = None, None, None
         if not lecture_pk:
             raise forms.ValidationError("Error: lecture_pk not provided.")
@@ -56,7 +59,7 @@ class RegisterAttendanceForm(forms.Form):
         # The passed parameters are valid; now handle registering attendance.
         try:
             student = Student.objects.get(\
-                    username__iexact=self.cleaned_data['UvANetID'])
+                    username__iexact=UvANetID)
             if course in student.StudentCourses.all():
                 if student in lecture.attending.all():
                     raise forms.ValidationError(
@@ -70,8 +73,7 @@ class RegisterAttendanceForm(forms.Form):
                     lecture.save()
         except Student.DoesNotExist:
             # Not a boolean. Return value is 'true' or 'false'
-            enrolled = self.datanose_enrolled(\
-                    self.cleaned_data['UvANetID'], course)
+            enrolled = self.datanose_enrolled(UvANetID, course)
             if enrolled == 'true':
                 # create Student; surfConnextID = None
                 # add Student to Course.Student
@@ -79,14 +81,14 @@ class RegisterAttendanceForm(forms.Form):
                 raise forms.ValidationError(
                         _('%(UvANetID)s enrolled for %(course)s at DN'),
                         code = 'invalid',
-                        params = {'UvANetID': self.cleaned_data['UvANetID'],\
+                        params = {'UvANetID': UvANetID,\
                                 'course': course },
                         )
             elif enrolled == 'false':
                 raise forms.ValidationError(
-                        _('%(UvANetID)s not enrolled for %(course)s'),
+                        _('%(UvANetID)s not enrolled for %(course)s at DN'),
                         code = 'invalid',
-                        params = {'UvANetID': self.cleaned_data['UvANetID'],\
+                        params = {'UvANetID': UvANetID,\
                                 'course': course },
                         )
             else:
@@ -95,6 +97,7 @@ class RegisterAttendanceForm(forms.Form):
                         code = 'invalid',
                         params = {'enrolled': enrolled },
                         )
+        return cleaned_data
 
 
     def datanose_enrolled(self, UvANetID, course):
@@ -103,16 +106,15 @@ class RegisterAttendanceForm(forms.Form):
         try:
             url = DN_WEBSERVICE_URL + '/enrolment/?' + urlencode(get_data)
             enrolled  = build_opener().open(url).read()
+            if enrolled:
+                logger.debug('DataNose Webservice request successful: '\
+                        + str(UvANetID) + ' enrolled for ' + str(course))
+            else:
+                logger.debug('DataNose Webservice request successful: '\
+                        + str(UvANetID)+ ' not enrolled for '+str(course))
+            return enrolled
         except HTTPError:
             logger.error('Invalid url')
             logger.debug('DataNose Webservice request failed!')
 
-        if enrolled:
-            logger.debug('DataNose Webservice request successful: '\
-                    + str(UvANetID) + ' enrolled for ' + str(course))
-        else:
-            logger.debug('DataNose Webservice request successful: '\
-                    + str(UvANetID)+ ' not enrolled for '+str(course))
-        return enrolled
-
-
+        return None

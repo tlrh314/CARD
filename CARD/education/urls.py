@@ -4,14 +4,6 @@ from django.conf.urls import patterns, url
 from education import views
 
 urlpatterns = patterns('',
-#        url(r'^attendance/$',AttendanceView.as_view(form_class=\
-#                AttendanceForm), name='attendance_register'),
-#        url(r'^attendance/complete/$',
-#            TemplateView.as_view(template_name='education/attendance_complete.html'),
-#            name='attendance_complete'),
-#        url(r'^attendance/closed/$',
-#            TemplateView.as_view(template_name='education/attendance_closed.html'),\
-#                    name='attendance_disallowed'),
         url(r'^$', views.IndexView.as_view(), name='index'),
         url(r'^(?P<course_pk>\d+)/$', views.CourseView.as_view(),name='course'),
         url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/$', \
@@ -23,5 +15,5 @@ urlpatterns = patterns('',
         url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/admin/$', \
                 views.AdminLectureView.as_view(),name='admin_lecture'),
         url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/register/$',\
-                views.RegisterAttendance.as_view(),name='register_attendance'),
+                views.RegisterAttendance.as_view(),name='register_form'),
         )

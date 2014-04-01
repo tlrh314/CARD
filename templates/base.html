@@ -40,7 +40,6 @@
         <div class="navbar-collapse collapse">
           {% if user.is_authenticated %}
           <ul class="nav navbar-nav">
-            <li><a href="{% url 'polls:index'  %}">Polls</a></li>
             {% if user.is_superuser %}
             <li><a href="{% url 'education:admin_index'  %}">Courses</a></li>
             {% else %}

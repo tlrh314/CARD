@@ -99,15 +99,31 @@ class AdminLectureView(generic.DetailView):
     pk_url_kwarg = 'lecture_pk'
     template_name = 'education/admin_lecture.html'
 
+from django.contrib import messages
 class RegisterAttendance(generic.FormView):
     template_name = 'education/register_attendance.html'
     form_class = RegisterAttendanceForm
     succes_url = None
 
+    # Qiute the dirty fix: pass lecture_pk to template, then shove in form
+    # trough a hidden field. There ought to be a more elegant solution.
     def get_context_data(self, **kwargs):
         context = super(RegisterAttendance, self).get_context_data(**kwargs)
         context['lecture'] = self.kwargs.get("lecture_pk")
         return context
 
+    # Upon succes the form's cleaned data is available. Use to send message.
+    def form_valid(self,form):
+        cleaned_data = form.cleaned_data
+        usr = cleaned_data['UvANetID']
+        lecture = Lecture.objects.get(id=cleaned_data['lecture_pk'])
+
+        #msg = '<span class="glyphicon glyphicon-ok"></span> '+\
+        msg = '%s is now registered as attending %s' % (usr, lecture)
+        messages.add_message(self.request, messages.SUCCESS, msg)
+        return redirect(self.get_success_url())
+
+
+    # Upon success, return to the form itself.
     def get_success_url(self):
         return self.request.get_full_path()
