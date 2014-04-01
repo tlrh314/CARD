@@ -5,7 +5,6 @@
 {% block content %}
 {% if user.is_superuser %}
   <h1> Register Attendance </h1>
-  {{ lecture }}
   <form action='' method="post" class="form" role="form">
     {% csrf_token %}
     {% bootstrap_form form %}

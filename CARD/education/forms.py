@@ -8,7 +8,7 @@ import json
 import logging
 
 from urllib import urlencode
-from urllib2 import urlopen, HTTPError
+from urllib2 import urlopen, HTTPError, build_opener
 
 from xml.dom import minidom
 #from django.utils import simplejson as json
@@ -40,7 +40,7 @@ class RegisterAttendanceForm(forms.Form):
 
     def clean(self):
         lecture_pk = self.cleaned_data['lecture_pk']
-        lecture, student = None, None
+        coure, lecture, student = None, None, None
         if not lecture_pk:
             raise forms.ValidationError("Error: lecture_pk not provided.")
         try:
@@ -51,12 +51,12 @@ class RegisterAttendanceForm(forms.Form):
                     code = 'invalid',
                     params={'pk': lecture_pk},
                     )
+        # The Lecture exists, therefore the Course exists.
+        course = Course.objects.get(id=lecture.course.pk)
         # The passed parameters are valid; now handle registering attendance.
         try:
             student = Student.objects.get(\
                     username__iexact=self.cleaned_data['UvANetID'])
-            # The Lecture exists, therefore the Course exists.
-            course = Course.objects.get(id=lecture.course.pk)
             if course in student.StudentCourses.all():
                 if student in lecture.attending.all():
                     raise forms.ValidationError(
@@ -69,54 +69,50 @@ class RegisterAttendanceForm(forms.Form):
                     lecture.attending.add(student)
                     lecture.save()
         except Student.DoesNotExist:
-            if self.datanose_enrolled(self.cleaned_data['UvANetID'], course):
+            # Not a boolean. Return value is 'true' or 'false'
+            enrolled = self.datanose_enrolled(\
+                    self.cleaned_data['UvANetID'], course)
+            if enrolled == 'true':
                 # create Student; surfConnextID = None
                 # add Student to Course.Student
                 # add to Lecture.Attending
                 raise forms.ValidationError(
                         _('%(UvANetID)s enrolled for %(course)s at DN'),
                         code = 'invalid',
-                        params = {'UvANetID': student.username,\
+                        params = {'UvANetID': self.cleaned_data['UvANetID'],\
+                                'course': course },
+                        )
+            elif enrolled == 'false':
+                raise forms.ValidationError(
+                        _('%(UvANetID)s not enrolled for %(course)s'),
+                        code = 'invalid',
+                        params = {'UvANetID': self.cleaned_data['UvANetID'],\
                                 'course': course },
                         )
             else:
                 raise forms.ValidationError(
-                        _('%(UvANetID)s not enrolled for %(course)s'),
+                        _('Unexpected DN return: %(enrolled)s'),
                         code = 'invalid',
-                        params = {'UvANetID': student.username,\
-                                'course': course },
+                        params = {'enrolled': enrolled },
                         )
 
+
     def datanose_enrolled(self, UvANetID, course):
-        post_data = [('courseID', course.dataNoseID), ('studentID', UvANetID)]
+        get_data = [('courseID', course.dataNoseID), ('studentID', UvANetID)]
 
         try:
-            # http://pastebin.com/8ZrdzNwT
-            url = DN_WEBSERVICE_URL + '/enrolment' + urlencode(post_data)
-            result = urlfetch.fetch(url,'','get');
-            dom = minidom.parseString(result.content)
-            json = simplejson.load(json)
-            #content = simplejson.load(minidom.parseString(\
-            #        urlopen(DN_WEBSERVICE_URL + '/enrolment', \
-            #        urlencode(post_data)).read().content)
+            url = DN_WEBSERVICE_URL + '/enrolment/?' + urlencode(get_data)
+            enrolled  = build_opener().open(url).read()
         except HTTPError:
             logger.error('Invalid url')
-            return HttpResponseBadRequest()
+            logger.debug('DataNose Webservice request failed!')
 
-        if content['boolean'] == 'true':
+        if enrolled:
             logger.debug('DataNose Webservice request successful: '\
                     + str(UvANetID) + ' enrolled for ' + str(course))
-            enrolled = True
-        elif content['boolean'] == 'false':
+        else:
             logger.debug('DataNose Webservice request successful: '\
                     + str(UvANetID)+ ' not enrolled for '+str(course))
-            enrolled = False
-        else:
-            logger.debug('DataNose Webservice request failed!')
-            return HttpResponseBadRequest()
+        return enrolled
 
-        if not enrolled:
-            raise forms.ValidationError(_("This Student is not enrolled "+\
-                    "for this course"))
 
-        return False
