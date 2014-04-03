@@ -1,5 +1,8 @@
 from django.shortcuts import render, redirect
 from django.views import generic
+from django.contrib import messages
+from django.contrib.sites.models import RequestSite
+from django.contrib.sites.models import Site
 
 from registration.views import _RequestPassingFormView
 from registration.models import RegistrationProfile
@@ -99,7 +102,6 @@ class AdminLectureView(generic.DetailView):
     pk_url_kwarg = 'lecture_pk'
     template_name = 'education/admin_lecture.html'
 
-from django.contrib import messages
 class RegisterAttendance(generic.FormView):
     template_name = 'education/register_attendance.html'
     form_class = RegisterAttendanceForm
@@ -110,6 +112,11 @@ class RegisterAttendance(generic.FormView):
     def get_context_data(self, **kwargs):
         context = super(RegisterAttendance, self).get_context_data(**kwargs)
         context['lecture'] = self.kwargs.get("lecture_pk")
+        if Site._meta.installed:
+            site = Site.objects.get_current()
+        else:
+            site = RequestSite(self.request)
+        context['site'] = site
         return context
 
     # Upon succes the form's cleaned data is available. Use to send message.

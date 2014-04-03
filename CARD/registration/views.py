@@ -201,8 +201,19 @@ def ivoauth_callback(request):
         attributes = content["attributes"]
         UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
         try:
-            # User exists, log in.
             user = authenticate(username=UvANetID)
+            # User has been created in attendance registration. Update data.
+            # Alternatively, check if registration profile exists ?
+            if user.surfConnextID == 'None':
+                user.email = attributes["urn:mace:dir:attribute-def:mail"][0]
+                user.first_name = \
+                        attributes["urn:mace:dir:attribute-def:givenName"][0]
+                user.last_name = \
+                        attributes["urn:mace:dir:attribute-def:cn"][0]
+                user.surfConnextID = \
+                        "surfconext/" + attributes["saml:sp:NameID"]["Value"]
+                logger.debug("Updated '{}' with surfconnext data".format(user))
+            # User exists, log in.
             login(request, user)
             logger.debug("Logged in user '{}'".format(user))
         except:

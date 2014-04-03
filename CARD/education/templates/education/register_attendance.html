@@ -11,6 +11,7 @@
     {% bootstrap_form form %}
     {% buttons %}
     <input type="hidden" name="lecture_pk" value="{{ lecture }}"/>
+    <input type="hidden" name="site" value="{{ site }}"/>
     <button type="submit" class="btn btn-primary">
       {% bootstrap_icon "star" %} is attending
     </button>

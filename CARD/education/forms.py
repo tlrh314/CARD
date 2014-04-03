@@ -3,8 +3,10 @@ from django import forms
 from django.utils.translation import ugettext_lazy as _
 
 from education.models import Course, Lecture, Student
+from registration.models import RegistrationProfile
 
 import logging
+import string, random
 
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError, build_opener
@@ -20,7 +22,7 @@ class RegisterAttendanceForm(forms.Form):
         if UvANetID exists:
             if UvANetID in Course.Students.all(): add to Lecture.attending
         elif requested Student is enrolled for the Course at DataNose:
-            create Student; surfConnextID = None
+            create Student; surfConnextID = 'None'
             add Student to Course.Student
             add to Lecture.Attending
         else: raise forms.ValueError
@@ -33,6 +35,7 @@ class RegisterAttendanceForm(forms.Form):
             " contain at most 10 alphanumeric characters."})
     # Using Lecture class, we can and Lecture.course, thus, Course.student
     lecture_pk = forms.CharField(widget=forms.HiddenInput())
+    site = forms.CharField(widget=forms.HiddenInput())
 
     def clean(self):
         # Fixed the issue that clean_<field> does not raise errors until after
@@ -42,7 +45,9 @@ class RegisterAttendanceForm(forms.Form):
             UvANetID = cleaned_data['UvANetID']
         except KeyError:
             return cleaned_data
+        # Very ugly hack. We need to access the request?!!
         lecture_pk = cleaned_data['lecture_pk']
+        site = cleaned_data['site']
         coure, lecture, student = None, None, None
         if not lecture_pk:
             raise forms.ValidationError("Error: lecture_pk not provided.")
@@ -72,24 +77,37 @@ class RegisterAttendanceForm(forms.Form):
                     lecture.attending.add(student)
                     lecture.save()
         except Student.DoesNotExist:
-            # Not a boolean. Return value is 'true' or 'false'
+            # Not a boolean. Return value is 'true' or 'false'.
             enrolled = self.datanose_enrolled(UvANetID, course)
             if enrolled == 'true':
-                # create Student; surfConnextID = None
-                # add Student to Course.Student
-                # add to Lecture.Attending
-                raise forms.ValidationError(
-                        _('%(UvANetID)s enrolled for %(course)s at DN'),
-                        code = 'invalid',
-                        params = {'UvANetID': UvANetID,\
-                                'course': course },
-                        )
+                # create Student; surfConnextID = 'None'
+                chars = string.ascii_uppercase+string.digits
+                password = ''.join(random.choice(chars) for x in range(12))
+                user = RegistrationProfile.objects.create_active_user(UvANetID,\
+                        '', password, '', '', 'None', site)
+                # add Student to Course.student
+                student = Student.objects.get(username__iexact=user.username)
+                student.StudentCourses.add(course)
+                student.save()
+                # add Student to Lecture.attending
+                lecture.attending.add(student)
+                lecture.save()
+
+                #raise forms.ValidationError(
+                #        _('%(UvANetID)s enrolled for %(course)s at DataNose'),
+                #        code = 'invalid',
+                #        params = {'UvANetID': UvANetID,\
+                #                'course': course },
+                #        )
             elif enrolled == 'false':
+                sis = '<a href="http://www.sis.uva.nl">SIS</a>'
                 raise forms.ValidationError(
-                        _('%(UvANetID)s not enrolled for %(course)s at DN'),
+                        _('%(UvANetID)s is not enrolled for %(course)s at '+\
+                                'DataNose. Please enrol at %(SIS)s.'),
                         code = 'invalid',
                         params = {'UvANetID': UvANetID,\
-                                'course': course },
+                                'course': course ,\
+                                'SIS': sis },
                         )
             else:
                 raise forms.ValidationError(
