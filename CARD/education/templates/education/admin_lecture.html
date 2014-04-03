@@ -49,10 +49,11 @@
         <div id="collapseThree" class="panel-collapse collapse in">
           <div class="panel-body">
             <table class="table">
-              <tr><td><b>Student ID</b></td>
+              <tr><td><b>Student ID</b></td><td><b>Name</b></td>
               <td><b>Status</b></td>
               {% for student in lecture.course.student.all%}
                 <tr><td>{{ student.username}}</td>
+                <td>{{ student.first_name }} {{ student.last_name }}</td>
                 {% set status = 'Absent' %}
                 {% for attending in lecture.attending.all %}
                   {% ifequal student.username attending.username %}
