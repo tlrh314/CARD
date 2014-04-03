@@ -111,7 +111,7 @@ class RegisterAttendanceForm(forms.Form):
                         )
             else:
                 raise forms.ValidationError(
-                        _('Unexpected DN return: %(enrolled)s'),
+                        _('Unexpected DataNose return: %(enrolled)s'),
                         code = 'invalid',
                         params = {'enrolled': enrolled },
                         )
