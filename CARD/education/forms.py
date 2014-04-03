@@ -43,6 +43,8 @@ class RegisterAttendanceForm(forms.Form):
         cleaned_data = super(RegisterAttendanceForm, self).clean()
         try:
             UvANetID = cleaned_data['UvANetID']
+            # When student is scanned by RFID-reader, id starts with '10'
+            # We possibly need to add an if-statement here?
         except KeyError:
             return cleaned_data
         # Very ugly hack. We need to access the request?!!
