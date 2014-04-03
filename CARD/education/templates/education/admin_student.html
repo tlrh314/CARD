@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load set_var %}
+{% load lookup %}
+{% block title %}CARD - Courses Admin/{{ lecture.course.name}}/Lectures/{{ lecture.title }}{% endblock %}
+
+{% block content %}
+{% if user.is_superuser %}
+  <h1> {{student.username}} </h1>
+  <h2> {{ student.first_name }} {{ student.last_name }} </h2>
+  {% set first = 'True' %}
+  <div class="panel-group" id="courses">
+    {% for course in course_list %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">
+            <a data-toggle="collapse" data-parent="#courses"
+                href="#course{{course.id}}">
+              {{ course }}
+            </a>
+          </h3>
+        </div>
+        <div id="course{{course.id}}" class="panel-collapse collapse
+          {% ifequal first 'True'%}in{%set first = 'False'%}{% endifequal %}">
+          <div class="panel-body">
+            <center>
+              {% lookup attended course.id %}/{{total_lectures}}
+              ({% lookup progress course.id %}%)
+            </center>
+            <div class="progress progress-striped active">
+              <div class="progress-bar progress-bar-success"  role="progressbar"
+                    aria-valuenow="{% lookup progress course.id %}"
+                    aria-valuemin="0" aria-valuemax="100"
+                    style="width: {% lookup progress course.id %}%">
+                <span class="sr-only">
+                  {% lookup progress course.id  %}% Complete
+                </span>
+              </div>
+            </div>
+            <table class="table">
+              <tr><td><b>Date</b></td><td><b>Lecturers</b></td>
+              <td><b>Title</b></td><td><b>Type</b></td><td><b>Status</b></td>
+              {% for lecture in course.lecture_set.all %}
+                <tr><td>{{ lecture.date }}</td>
+                <td>{{ lecture.lecturers }}</td>
+                <td>
+                  <a href="{% url 'education:admin_lecture' course.pk lecture.pk %}">
+                    {{ lecture.title }}
+                  </a>
+                </td>
+                {% for abbreviation, fullname in lecture.TYPES %}
+                  {% if abbreviation == lecture.classification %}
+                    <td>{{ fullname }}</td>
+                  {% endif %}
+                {% endfor %}
+                <td><span class="label
+                    label-{% lookup status course.id lecture.id '0' %}">
+                  {% lookup status course.id lecture.id '1' %}
+                </span></td>
+              {% endfor %}
+            </table>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <p> You have no permission to view this page </p>
+{% endif %}
+{% endblock %}

@@ -102,6 +102,43 @@ class AdminLectureView(generic.DetailView):
     pk_url_kwarg = 'lecture_pk'
     template_name = 'education/admin_lecture.html'
 
+class AdminStudentView(generic.DetailView):
+    model = Student
+    pk_url_kwarg = 'student_pk'
+    template_name = 'education/admin_student.html'
+
+    def get_context_data(self, **kwargs):
+        # Initialize the context and set up the current_course.
+        context = super(AdminStudentView, self).get_context_data(**kwargs)
+        student = Student.objects.get(id=self.kwargs.get("student_pk"))
+        context['student'] = student
+
+        # Initialize 2D array with keys UvANetID and type of Lecture.
+        status = defaultdict(dict)
+        attended = {}
+        progress = {}
+        course_list = []
+        for course in student.StudentCourses.all():
+            course_list.append(course)
+            number_attended = 0
+            for lecture in Lecture.objects.filter(course_id=course.id):
+                if student in lecture.attending.all():
+                    status[course.id][lecture.id] = ('success', 'Present')
+                    number_attended += 1
+                else:
+                    status[course.id][lecture.id] = ('danger', 'Absent')
+            attended[course.id] = number_attended
+            progress[course.id] = (100*float(number_attended)\
+                    /LECTURES_REQUIRED)
+
+        context['course_list'] = course_list
+        context['status'] = status
+        context['attended'] = attended
+        context['total_lectures'] = LECTURES_REQUIRED
+        context['progress'] = progress
+
+        return context
+
 class RegisterAttendance(generic.FormView):
     template_name = 'education/register_attendance.html'
     form_class = RegisterAttendanceForm

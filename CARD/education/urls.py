@@ -14,6 +14,8 @@ urlpatterns = patterns('',
                 views.AdminCourseView.as_view(),name='admin_course'),
         url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/admin/$', \
                 views.AdminLectureView.as_view(),name='admin_lecture'),
+        url(r'^(?P<course_pk>\d+)/student/(?P<student_pk>\d+)/$', \
+                views.AdminStudentView.as_view(),name='admin_student'),
         url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/register/$',\
                 views.RegisterAttendance.as_view(),name='register_form'),
         )
