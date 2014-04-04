@@ -10,6 +10,8 @@ from registration.models import RegistrationProfile
 from education.models import Student, Course, Lecture
 from education.forms import RegisterAttendanceForm
 
+from CARD.settings import TYPES
+
 import logging
 from collections import defaultdict
 
@@ -80,7 +82,7 @@ class AdminCourseView(generic.DetailView):
         # Initialize 2D array with keys UvANetID and type of Lecture.
         attendance = defaultdict(dict)
         for student in current_course.student.all():
-            for abbreviation, fullname in Lecture.TYPES:
+            for abbreviation, fullname in TYPES:
                 attendance[student.username][abbreviation] = 0
             attendance[student.username]['total'] = 0
 
@@ -91,6 +93,7 @@ class AdminCourseView(generic.DetailView):
                     attendance[student.username][lecture.classification] += 1
                     attendance[student.username]['total'] += 1
         context['attendance'] = attendance
+        context['TYPES'] = TYPES
 
         return context
   #def get_queryset(self):

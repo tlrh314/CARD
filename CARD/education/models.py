@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
+from CARD.settings import TYPES
 
 import datetime
 
@@ -15,11 +16,12 @@ class Student(User):
 
 class Course(models.Model):
     name = models.CharField(_('Full Name'), max_length=100, unique=True)
-    slug = models.SlugField(_('Abbreviation'), max_length=15, unique=True)
+    slug = models.SlugField(_('Abbreviation'), max_length=15, \
+            unique=True, blank=True)
     dataNoseID = models.DecimalField(_('DataNose ID'), max_digits=7,\
             decimal_places=0, unique=True)
     catalogID = models.CharField(_('Catalog Number'), max_length=10,\
-            unique=True)
+            unique=True, blank=True)
     description = models.TextField(_('Description'))
     coordinator = models.CharField(_('Coordinator'), max_length=100)
     # change student to enrolled?
@@ -41,13 +43,10 @@ class Lecture(models.Model):
     date = models.DateTimeField(_('Date'))
     lecturers = models.CharField(_('Lecturers'), max_length=150)
     title = models.CharField(_('Full Title'), max_length=150)
-    slug = models.SlugField(_('Abbreviation'), max_length=15, unique = True)
+    slug = models.SlugField(_('Abbreviation'), max_length=15, \
+            unique = True, blank=True)
     abstract = models.TextField(_('Abstract'))
     # Move TYPES to Settings.
-    TYPES = (('I', _('Programme Information')),
-            ('A', _('Alumni Lecture')),
-            ('T', _('Guided Tour')),
-            ('R', _('Regular')))
     classification = models.CharField(_('Type'), max_length=1, choices=TYPES)
     created = models.DateTimeField(auto_now = True)
     updated = models.DateTimeField(auto_now_add = True)

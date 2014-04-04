@@ -47,11 +47,7 @@
                     {{ lecture.title }}
                   </a>
                 </td>
-                {% for abbreviation, fullname in lecture.TYPES %}
-                  {% if abbreviation == lecture.classification %}
-                    <td>{{ fullname }}</td>
-                  {% endif %}
-                {% endfor %}
+                  <td>{{ lecture.get_classification_display }}</td>
                 <td><span class="label
                     label-{% lookup status course.id lecture.id '0' %}">
                   {% lookup status course.id lecture.id '1' %}

@@ -25,11 +25,7 @@
               <tr><td>{{ lecture.date }}</td>
               <td>{{ lecture.lecturers }}</td>
               <td>{{ lecture.title }}</td>
-              {% for abbreviation, fullname in lecture.TYPES %}
-                {% if abbreviation == lecture.classification %}
-                  <td>{{ fullname }}</td>
-                {% endif %}
-              {% endfor %}
+                <td>{{ lecture.get_classification_display }}</td>
             </table>
           </div>
         </div>

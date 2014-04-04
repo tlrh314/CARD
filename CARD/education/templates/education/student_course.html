@@ -61,11 +61,7 @@
                       {{ lecture.title }}
                     </a>
                   </td>
-                  {% for abbreviation, fullname in lecture.TYPES %}
-                    {% if abbreviation == lecture.classification %}
-                      <td>{{ fullname }}</td>
-                    {% endif %}
-                  {% endfor %}
+                    <td>{{ lecture.get_classification_display }}</td>
                   {% set status = 'Absent' %}
                   {% for present in lecture.attending.all %}
                     {% ifequal present.username user.username %}
