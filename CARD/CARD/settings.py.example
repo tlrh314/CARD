@@ -105,6 +105,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
         'django.core.context_processors.request',
         )
 
+TYPES = (('I', _('Programme Information')),
+        ('A', _('Alumni Lecture')),
+        ('T', _('Guided Tour')),
+        ('R', _('Regular')))
+
 # Django-Registration settings
 # https://django-registration.readthedocs.org/en/latest/quickstart.html
 LOGIN_REDIRECT_URL = '/'
