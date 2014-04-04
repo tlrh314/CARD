@@ -18,4 +18,6 @@ urlpatterns = patterns('',
                 views.AdminStudentView.as_view(),name='admin_student'),
         url(r'^(?P<course_pk>\d+)/lecture/(?P<lecture_pk>\d+)/register/$',\
                 views.RegisterAttendance.as_view(),name='register_form'),
+        url(r'(?P<course_pk>\d+)/export/$', views.save_to_xls, \
+            name='export'),
         )

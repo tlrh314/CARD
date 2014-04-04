@@ -89,6 +89,17 @@
           </div>
         </div>
       </div>
+      <div class="panel-group" id="export">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+              <a href="{% url 'education:export' course.id %}">
+                Export
+              </a>
+            </h3>
+          </div>
+        </div>
+      </div>
 
 {% else %}
   <p> You have no permission to view this page </p>

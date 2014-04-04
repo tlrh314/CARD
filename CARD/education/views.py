@@ -3,6 +3,8 @@ from django.views import generic
 from django.contrib import messages
 from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
+from django.http import HttpResponse
+from django.contrib.auth.decorators import user_passes_test
 
 from registration.views import _RequestPassingFormView
 from registration.models import RegistrationProfile
@@ -14,6 +16,8 @@ from CARD.settings import TYPES
 
 import logging
 from collections import defaultdict
+import xlwt
+#from datetime import datetime, date
 
 logger = logging.getLogger('registration')
 
@@ -96,18 +100,10 @@ class AdminCourseView(generic.DetailView):
         context['TYPES'] = TYPES
 
         return context
+
   #def get_queryset(self):
     #course = Course.objects.get(pk=xxx)
     #return course.student.all()
-    def xls_to_response(xls, fname):
-        response = HttpResponse(mimetype="application/ms-excel")
-        response['Content-Disposition'] = 'attachment; filename=%s' % fname
-        xls.save(response)
-        return response
-
-    def save_to_xls():
-        # Create xls object
-        return xls_to_response(xls,'foo.xls')
 
 class AdminLectureView(generic.DetailView):
     model = Lecture
@@ -183,3 +179,48 @@ class RegisterAttendance(generic.FormView):
     # Upon success, return to the form itself.
     def get_success_url(self):
         return self.request.get_full_path()
+
+@user_passes_test(lambda u: u.is_superuser)
+def save_to_xls(request, course_pk):
+    course = Course.objects.get(id=course_pk)
+    xls = xlwt.Workbook(encoding='utf8')
+    sheet = xls.add_sheet('Sheet-Name')
+
+    default_style = xlwt.Style.default_style
+    #datetime_style = xlwt.easyxf(num_format_str='dd/mm/yyyy hh:mm')
+    #date_style = xlwt.easyxf(num_format_str='dd/mm/yyyy')
+
+    #values_list = Course.objects.all().values_list()
+
+    #for row, rowdata in enumerate(values_list):
+        #for col, val in enumerate(rowdata):
+            #if isinstance(val, datetime):
+                #style = datetime_style
+            #elif isinstance(val, date):
+                #style = date_style
+            #else:
+                #style = default_style
+            #style = default_style
+            #sheet.write(row,col,val,style=style)
+    sheet.write(0, 0, 'UvANetID' , style=default_style)
+    row = 1
+    header = False;
+    for student in course.student.all():
+        sheet.write(row, 0, student.username , style=default_style)
+        col = 1
+        for lecture in Lecture.objects.filter(course_id=course.id):
+            if not header:
+                date = lecture.date.strftime("%s" % "%B %d")
+                sheet.write(0, col, date , style=default_style)
+            attending = lecture.attending.all()
+            if student in attending: val = 1
+            else: val = 0
+            sheet.write(row, col, val, style=default_style)
+            col += 1
+        header = True
+        row += 1
+    fname = str(course.slug)+'.xls'
+    response = HttpResponse(mimetype='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename=%s' % fname
+    xls.save(response)
+    return response
