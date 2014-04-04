@@ -79,3 +79,5 @@ settings.py
 
 # Vim
 *.swp
+
+*.tmp
