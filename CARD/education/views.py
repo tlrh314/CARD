@@ -96,6 +96,15 @@ class AdminCourseView(generic.DetailView):
   #def get_queryset(self):
     #course = Course.objects.get(pk=xxx)
     #return course.student.all()
+    def xls_to_response(xls, fname):
+        response = HttpResponse(mimetype="application/ms-excel")
+        response['Content-Disposition'] = 'attachment; filename=%s' % fname
+        xls.save(response)
+        return response
+
+    def save_to_xls():
+        # Create xls object
+        return xls_to_response(xls,'foo.xls')
 
 class AdminLectureView(generic.DetailView):
     model = Lecture
@@ -162,8 +171,8 @@ class RegisterAttendance(generic.FormView):
         usr = cleaned_data['UvANetID']
         lecture = Lecture.objects.get(id=cleaned_data['lecture_pk'])
 
-        #msg = '<span class="glyphicon glyphicon-ok"></span> '+\
-        msg = '%s is now registered as attending %s' % (usr, lecture)
+        msg = '<span class="glyphicon glyphicon-ok"></span> '+\
+                '%s is now registered as attending %s' % (usr, lecture)
         messages.add_message(self.request, messages.SUCCESS, msg)
         return redirect(self.get_success_url())
 
