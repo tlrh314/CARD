@@ -94,11 +94,16 @@ STATIC_URL = '/static/'
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 MEDIA_ROOT = '/path/to/CARD/site_media/'
 TEMPLATE_DIRS = '/path/to/templates/',
+# To enable accessing request in every template
+TEMPLATE_CONTEXT_PROCESSORS = (
+        'django.core.context_processors.request',
+        'django.contrib.auth.context_processors.auth',
+        )
 
 # Django-Registration settings
 # https://django-registration.readthedocs.org/en/latest/quickstart.html
 LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/ivoauth'
+LOGIN_URL = '/accounts/ivoauth'
 SESSION_COOKIE_AGE = 3600 # seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 REGISTRATION_OPEN = False

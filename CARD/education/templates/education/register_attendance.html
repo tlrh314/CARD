@@ -6,7 +6,7 @@
 {% if user.is_superuser %}
   {% bootstrap_messages %}
   <h1> Register Attendance </h1>
-  <form action='' method="post" class="form" role="form">
+  <form name = "attendance" action='' method="post" class="form" role="form">
     {% csrf_token %}
     {% bootstrap_form form %}
     {% buttons %}

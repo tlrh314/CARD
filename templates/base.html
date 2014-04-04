@@ -19,7 +19,12 @@ website for the FNWI">
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
   </head>
 
-  <body>
+  {% if 'register' in request.get_full_path %}
+    <body onLoad="document.forms.attendance.UvANetID.select()">
+  {% else %}
+    <body>
+  {% endif %}
+
     {% block navigation %}
     {% url 'auth_password_reset' as auth_pwd_reset_url %}
     {% url 'registration_register' as register_url%}
@@ -42,6 +47,7 @@ website for the FNWI">
           <ul class="nav navbar-nav">
             {% if user.is_superuser %}
             <li><a href="{% url 'education:admin_index' %}">Courses</a></li>
+            <li><a href="{% url 'education:admin_index' %}">Register</a></li>
             {% else %}
             <li><a href="{% url 'education:index' %}">Courses</a></li>
             {% endif %}
