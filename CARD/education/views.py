@@ -18,6 +18,7 @@ import logging
 from collections import defaultdict
 import xlwt
 from datetime import datetime, date
+from string import uppercase
 
 logger = logging.getLogger('registration')
 
@@ -180,50 +181,96 @@ class RegisterAttendance(generic.FormView):
     def get_success_url(self):
         return self.request.get_full_path()
 
+# Helper functions to generate column names (A-Z, AA-ZZ, etc) for Excel
+def base_26_gen(x):
+    if x == 0: yield x
+    while x > 0:
+        yield x % 26
+        x //= 26
+
+def base_26_chr(x):
+    return ''.join(uppercase[i] for i in reversed(list(base_26_gen(x))))
+
 # Error with non-authenticated users (timeout). Perhaps examine
 # https://djangosnippets.org/snippets/1768/ for a fix?
 @user_passes_test(lambda u: u.is_superuser)
 def save_to_xls(request, course_pk):
     """
-        Description
+        Requires xlwt and helper functions base_26_chr (thus base_26_chr).
+
+        This function enables exporting a xls database of the course attendance
+        data. The format used is the current format used for Orientatie.
+        Note that there is an 'off-by-one' due to xlwt's count starts at row 0,
+        whereas Excel starts at row 1.
     """
 
     course = Course.objects.get(id=course_pk)
     xls = xlwt.Workbook(encoding='utf8')
     sheet = xls.add_sheet('CARD Data')
 
-    default_style = xlwt.Style.default_style
+    # Define custom styles.
+    plain = xlwt.Style.default_style
+    borders = xlwt.easyxf(\
+            'borders: top thin, right thin, bottom  thin, left thin;')
+    bold = xlwt.easyxf('font: bold on;')
+    boldborders = xlwt.easyxf('font: bold on;'+ \
+        'borders: top thin, right thin, bottom  thin, left thin;')
     #datetime_style = xlwt.easyxf(num_format_str='dd/mm/yyyy hh:mm')
     #date_style = xlwt.easyxf(num_format_str='dd/mm/yyyy')
 
-    sheet.write(2, 0, 'UvANetID' , style=default_style)
-    sheet.write(2, 1, 'First Name' , style=default_style)
-    sheet.write(2, 2, 'Last Name' , style=default_style)
-    sheet.write(2, 3, 'Email' , style=default_style)
-    sheet.write(2, 4, 'Programme' , style=default_style)
-    sheet.write(2, 5, 'Vorig jaar aanwezig' , style=default_style)
+    # Create header.
+    sheet.write(0, 0, 'Aanwezigheidsregistratie %s' % course.name, \
+            style=bold)
+    sheet.write(1, 0, '1= aanwezig 0= afwezig', style=plain)
+
+    sheet.write(2, 0, 'Student ID' , style=boldborders)
+    sheet.write(2, 1, 'UvANetID' , style=boldborders)
+    sheet.write(2, 2, 'First Name' , style=boldborders)
+    sheet.write(2, 3, 'Last Name' , style=boldborders)
+    sheet.write(2, 4, 'Email' , style=boldborders)
+    sheet.write(2, 5, 'Programme' , style=boldborders)
+    sheet.write(2, 6, 'Vorig jaar aanwezig' , style=boldborders)
     row = 3
     header = False;
     for student in course.student.all():
+        #  Insert student details. Data according to current Orientatie format.
         profile = RegistrationProfile.objects.get(user_id=student)
-        sheet.write(row, 0, student.username , style=default_style)
-        sheet.write(row, 1, student.first_name , style=default_style)
-        sheet.write(row, 2, student.last_name , style=default_style)
-        sheet.write(row, 3, student.email , style=default_style)
-        sheet.write(row, 4, profile.programme , style=default_style)
-        sheet.write(row, 5, profile.offset , style=default_style)
-        col = 6
+        sheet.write(row, 0, profile.other_id, style=borders)
+        sheet.write(row, 1, student.username , style=borders)
+        sheet.write(row, 2, student.first_name , style=borders)
+        sheet.write(row, 3, student.last_name , style=borders)
+        sheet.write(row, 4, student.email , style=borders)
+        sheet.write(row, 5, profile.programme , style=borders)
+        sheet.write(row, 6, profile.offset , style=borders)
+
+        # Insert student attendance data: 1 for attending, 0 for absent.
+        col = 7
         for lecture in Lecture.objects.filter(course_id=course.id):
             if not header:
                 date = lecture.date.strftime("%s" % "%d/%b")
-                sheet.write(2, col, date , style=default_style)
+                sheet.write(2, col, date , style=boldborders)
             attending = lecture.attending.all()
             if student in attending: val = 1
             else: val = 0
-            sheet.write(row, col, val, style=default_style)
+            sheet.write(row, col, val, style=borders)
             col += 1
         header = True
         row += 1
+
+    # Create sum function for total per-lecture count.
+    col_names = [base_26_chr(x) for x in range(col)]
+    for i in range(7, col):
+        sheet.write(row+2, i, xlwt.Formula('SUM(%(ncol)s4:%(ncol)s%(myRow)s)'\
+                % { 'ncol': col_names[i], 'myRow': row}),style=plain)
+
+    # Create sum function for total per-student count.
+    sheet.write(2, col, 'Total', style=boldborders)
+    for i in range(3, row):
+        sheet.write(i, col, xlwt.Formula('SUM(G%(myRow)s:%(ncol)s%(myRow)s)'\
+                % { 'ncol': col_names[col-1], 'myRow': i+1}),style=plain)
+    # Create sum function for total attended count
+    sheet.write(row+2, col, xlwt.Formula('SUM(G%(myRow)s:%(ncol)s%(myRow)s)'\
+            % { 'myRow': row+3, 'ncol':col_names[col-1] }), style=plain)
 
     # Return a response that allows to download the xls-file.
     fname = u'CARD Data %(course)s tm %(now)s.xls' % { \
@@ -234,3 +281,7 @@ def save_to_xls(request, course_pk):
     response['Content-Disposition'] = 'attachment; filename="%s"' % (fname)
     xls.save(response)
     return response
+
+@user_passes_test(lambda u: u.is_superuser)
+def read_from_xls(request, course_pk):
+
