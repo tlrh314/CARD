@@ -198,6 +198,9 @@ class RegistrationProfile(models.Model):
     ACTIVATED = u"ALREADY_ACTIVATED"
 
     user = models.ForeignKey(User, unique=True, verbose_name=_('user'))
+    other_id = models.CharField(_('Student ID'), max_length=10, blank=True)
+    programme = models.CharField(_('Programme'), max_length=75, blank=True)
+    offset = models.IntegerField(_('Last Year'), default=0, blank=True)
     surfConnextID = models.CharField(_('surfConnextID'), max_length=75)
     activation_key = models.CharField(_('activation key'), max_length=40)
 

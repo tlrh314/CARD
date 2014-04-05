@@ -17,7 +17,7 @@ from CARD.settings import TYPES
 import logging
 from collections import defaultdict
 import xlwt
-#from datetime import datetime, date
+from datetime import datetime, date
 
 logger = logging.getLogger('registration')
 
@@ -180,38 +180,43 @@ class RegisterAttendance(generic.FormView):
     def get_success_url(self):
         return self.request.get_full_path()
 
+# Error with non-authenticated users (timeout). Perhaps examine
+# https://djangosnippets.org/snippets/1768/ for a fix?
 @user_passes_test(lambda u: u.is_superuser)
 def save_to_xls(request, course_pk):
+    """
+        Description
+    """
+
     course = Course.objects.get(id=course_pk)
     xls = xlwt.Workbook(encoding='utf8')
-    sheet = xls.add_sheet('Sheet-Name')
+    sheet = xls.add_sheet('CARD Data')
 
     default_style = xlwt.Style.default_style
     #datetime_style = xlwt.easyxf(num_format_str='dd/mm/yyyy hh:mm')
     #date_style = xlwt.easyxf(num_format_str='dd/mm/yyyy')
 
-    #values_list = Course.objects.all().values_list()
-
-    #for row, rowdata in enumerate(values_list):
-        #for col, val in enumerate(rowdata):
-            #if isinstance(val, datetime):
-                #style = datetime_style
-            #elif isinstance(val, date):
-                #style = date_style
-            #else:
-                #style = default_style
-            #style = default_style
-            #sheet.write(row,col,val,style=style)
-    sheet.write(0, 0, 'UvANetID' , style=default_style)
-    row = 1
+    sheet.write(2, 0, 'UvANetID' , style=default_style)
+    sheet.write(2, 1, 'First Name' , style=default_style)
+    sheet.write(2, 2, 'Last Name' , style=default_style)
+    sheet.write(2, 3, 'Email' , style=default_style)
+    sheet.write(2, 4, 'Programme' , style=default_style)
+    sheet.write(2, 5, 'Vorig jaar aanwezig' , style=default_style)
+    row = 3
     header = False;
     for student in course.student.all():
+        profile = RegistrationProfile.objects.get(user_id=student)
         sheet.write(row, 0, student.username , style=default_style)
-        col = 1
+        sheet.write(row, 1, student.first_name , style=default_style)
+        sheet.write(row, 2, student.last_name , style=default_style)
+        sheet.write(row, 3, student.email , style=default_style)
+        sheet.write(row, 4, profile.programme , style=default_style)
+        sheet.write(row, 5, profile.offset , style=default_style)
+        col = 6
         for lecture in Lecture.objects.filter(course_id=course.id):
             if not header:
-                date = lecture.date.strftime("%s" % "%B %d")
-                sheet.write(0, col, date , style=default_style)
+                date = lecture.date.strftime("%s" % "%d/%b")
+                sheet.write(2, col, date , style=default_style)
             attending = lecture.attending.all()
             if student in attending: val = 1
             else: val = 0
@@ -219,8 +224,13 @@ def save_to_xls(request, course_pk):
             col += 1
         header = True
         row += 1
-    fname = str(course.slug)+'.xls'
+
+    # Return a response that allows to download the xls-file.
+    fname = u'CARD Data %(course)s tm %(now)s.xls' % { \
+            'course': course.name, \
+            'now' : datetime.now().strftime("%s" % ("%d %b %Y")) \
+            }
     response = HttpResponse(mimetype='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename=%s' % fname
+    response['Content-Disposition'] = 'attachment; filename="%s"' % (fname)
     xls.save(response)
     return response
