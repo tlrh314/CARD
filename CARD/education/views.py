@@ -1,16 +1,18 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, render_to_response
 from django.views import generic
 from django.contrib import messages
 from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
 from django.http import HttpResponse
 from django.contrib.auth.decorators import user_passes_test
+from django.views.decorators.csrf import csrf_protect
+from django.template import RequestContext
 
 from registration.views import _RequestPassingFormView
 from registration.models import RegistrationProfile
 
 from education.models import Student, Course, Lecture
-from education.forms import RegisterAttendanceForm
+from education.forms import RegisterAttendanceForm, XlsInputForm
 
 from CARD.settings import TYPES
 
@@ -283,5 +285,22 @@ def save_to_xls(request, course_pk):
     return response
 
 @user_passes_test(lambda u: u.is_superuser)
+@csrf_protect
 def read_from_xls(request, course_pk):
+# https://stackoverflow.com/questions/3665379/django-and-xlrd-reading-from-memory/3665672#3665672
+    if request.method == 'POST':
+        form = XlsInputForm(request.POST, request.FILES)
+        if form.is_valid():
+            input_excel = request.FILES['input_excel']
+            book = xlrd.open_workbook(file_contents=input_excel.read())
+            return render_to_response('education/import_excel.html', \
+                    {'rows':rows}, context_instance=RequestContext(request))
+    else:
+        form = XlsInputForm()
+
+    return render_to_response('education/import_excel.html', {'form': form},\
+            context_instance=RequestContext(request))
+
+    #html = "<html><body>%s </body></html>" % user
+    #return HttpResponse(html)
 

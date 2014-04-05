@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% block title %} CARD - Import Excel Database{% endblock %}
+
+{% block content %}
+{# {% if request.user.is_superuser %} #}
+  {% bootstrap_messages %}
+  <h1> Register Attendance </h1>
+  <form name = "import-excel" action='' method="post" class="form" role="form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+    <button type="submit" class="btn btn-primary">
+      {% bootstrap_icon "star" %} Choose
+    </button>
+    {% endbuttons %}
+  </form>
+  {# {% else %} #}
+  <!--<p> You have no permission to view this page </p> -->
+ {# {% endif %} #}
+
+{% endblock %}
