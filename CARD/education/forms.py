@@ -150,7 +150,13 @@ class XlsInputForm(forms.Form):
         extension = splitext( input_excel.name )[1]
 
         if not (extension in IMPORT_FILE_TYPES):
-            raise forms.ValidationError( u'%s is not a valid excel file. Please make sure your input file is an excel file (Excel 2007 is NOT supported.' % extension )
+            raise forms.ValidationError(
+                    _('Error: %(ext)s is not a valid Excel file. '+\
+                    'Please make sure your input is an Excel file. '+\
+                    'Note that Excel 2007 is NOT supported!'),
+                    code = 'invalid',
+                    params={'ext': extension},
+                    )
         else:
             return input_excel
 # Worth looking into

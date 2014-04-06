@@ -88,7 +88,7 @@ class RegistrationManager(models.Manager):
         new_user.last_name = last_name
         new_user.is_active = False
         new_user.surfConnextID = ''
-        new_user.groups.add(Group.objects.get_or_create(name='Student'))
+        new_user.groups.add(Group.objects.get_or_create(name='Student')[0])
         new_user.save()
         registration_profile = self.create_profile(new_user)
 
@@ -105,7 +105,7 @@ class RegistrationManager(models.Manager):
         new_user.last_name = last_name
         new_user.surfConnextID = surfConnextID
         new_user.is_active = True
-        #new_user.groups.add(Group.objects.get_or_create(name='Student'))
+        new_user.groups.add(Group.objects.get_or_create(name='Student')[0])
         new_user.save()
         registration_profile = self.create_profile(new_user)
 

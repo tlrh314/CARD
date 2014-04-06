@@ -35,4 +35,4 @@ class CourseAdmin(admin.ModelAdmin):
                 request.user.groups.filter(name='Coordinator').exists()
 
 admin.site.register(Course, CourseAdmin)
-#admin.site.register(Lecture, LectureAdmin)
+admin.site.register(Lecture, LectureAdmin)

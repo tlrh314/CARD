@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
 
@@ -156,7 +156,7 @@ class RegisterAttendance(generic.FormView):
     form_class = RegisterAttendanceForm
     succes_url = None
 
-    # Qiute the dirty fix: pass lecture_pk to template, then shove in form
+    # Quick and dirty fix: pass lecture_pk to template, then shove in form
     # trough a hidden field. There ought to be a more elegant solution.
     def get_context_data(self, **kwargs):
         context = super(RegisterAttendance, self).get_context_data(**kwargs)
@@ -192,7 +192,7 @@ def base_26_gen(x):
         x //= 26
 
 def base_26_chr(x):
-    return ''.join(uppercase[i] for i in reversed(list(base_26_gen(x))))
+    return ''.join(string.uppercase[i] for i in reversed(list(base_26_gen(x))))
 
 # Error with non-authenticated users (timeout). Perhaps examine
 # https://djangosnippets.org/snippets/1768/ for a fix?
@@ -234,6 +234,7 @@ def save_to_xls(request, course_pk):
     sheet.write(2, 5, 'Programme' , style=boldborders)
     sheet.write(2, 6, 'Vorig jaar aanwezig' , style=boldborders)
     row = 3
+    col = 7
     header = False;
     for student in course.student.all():
         #  Insert student details. Data according to current Orientatie format.
@@ -326,19 +327,26 @@ def add_import_data(request, sheet, course_pk):
     valid. Also, remember the off-by one for xlrd and Excel row numbering.
     """
 
-    # First create the lectures. Note that we only know the date!
+    # Firstly, create the lectures. Note that we only know the date w/o the year!
     for col_nr in range(7, sheet.ncols-1):
-        break
         raw_date = sheet.cell_value(2, col_nr)
         # Only day/Month. Add current year
         raw_date += '/2014'
         date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
         title = 'Lecture ' + str(col_nr-6)
-        lecture = Lecture.objects.create_lecture(course_pk, date, \
-                title, 'R')
-        lecture.save()
-        break
+        try:
+            lecture = Lecture.objects.get(date__exact=date)
+        except Lecture.DoesNotExist:
+            lecture = Lecture.objects.create_lecture(course_pk, date, \
+                    title, 'R')
+            lecture.save()
 
+    if Site._meta.installed:
+        site = Site.objects.get_current()
+    else:
+        site = RequestSite(request)
+    chars = string.ascii_uppercase+string.digits
+    # Secondly, get or create the students and add the data known from Excel.
     for row_nr in range(3, sheet.nrows-3):
         # Get or create student. Add data to student/profile.
         other_id = unicode(sheet.cell_value(row_nr, 0)).split('.')[0]
@@ -351,23 +359,34 @@ def add_import_data(request, sheet, course_pk):
         except:
             # User does not exist, create new user.
             email = sheet.cell_value(row_nr, 4)
-            chars = string.ascii_uppercase+string.digits
             password = ''.join(random.choice(chars) for x in range(12))
             first_name = sheet.cell_value(row_nr, 2)
             last_name = sheet.cell_value(row_nr, 3)
             surfConnextID = 'excel/None'
-            if Site._meta.installed:
-                site = Site.objects.get_current()
-            else:
-                site = RequestSite(request)
-            student = RegistrationProfile.objects.create_active_user(UvANetID, \
+            new_user = RegistrationProfile.objects.create_active_user(UvANetID, \
                     email, password, first_name, last_name, surfConnextID, site)
-            profile = RegistrationProfile.objects.get(user_id=student)
+            profile = RegistrationProfile.objects.get(user_id=new_user)
             profile.other_id = other_id
             profile.programme = sheet.cell_value(row_nr, 5)
             profile.offset = sheet.cell_value(row_nr, 6)
             profile.save()
-            break
+            student = Student.objects.get(pk=new_user.id)
+        try:
+            student.StudentCourses.add(course_pk)
+            student.save()
+        except:
+            pass
+
+        # Lastly, add the attendance of known Lectures to known Students.
+        for col_nr in range(7, sheet.ncols-1):
+            raw_date = sheet.cell_value(2, col_nr)
+            raw_date += '/2014'
+            date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
+            lecture = Lecture.objects.get(date__exact=date)
+            status = sheet.cell_value(row_nr, col_nr)
+            if status == 1:
+                lecture.attending.add(student)
+
 
 @user_passes_test(lambda u: u.is_superuser)
 @csrf_protect
@@ -392,11 +411,10 @@ def read_from_xls(request, course_pk):
             book = xlrd.open_workbook(file_contents=input_excel.read())
             sheet = book.sheet_by_index(0)
 
-            # Quick and dirty validation of row 3.
+            # Quick and dirty fix: validation of row 3.
             valid, msg = quick_validate(sheet)
             if valid:
-                add_import_data(request, sheet, course_pk)
-
+                #add_import_data(request, sheet, course_pk)
                 msg = '<span class="glyphicon glyphicon-ok"></span> '+\
                         'Import successfull!'
                 messages.add_message(request, messages.SUCCESS, msg)
@@ -408,10 +426,8 @@ def read_from_xls(request, course_pk):
 
             # This should eventually redirect / render_to_response to
             # admin_course. Simply changing results in course_pk not passed.
-            return render_to_response('education/content_excel.html', \
-                    { 'book':book, 'sheet': sheet, 'valid': valid, \
-                    'msg': msg}, \
-                    context_instance=RequestContext(request))
+            return HttpResponseRedirect(reverse('education:admin_course', \
+                    kwargs={'course_pk': course_pk}))
     else:
         form = XlsInputForm()
 

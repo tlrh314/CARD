@@ -1,10 +1,12 @@
 {% extends "base.html" %}
+{% load bootstrap3 %}
 {% load set_var %}
 {% load lookup %}
 {% block title %}CARD - Courses Admin/{{ course.name}}{% endblock %}
 
 {% block content %}
 {% if user.is_superuser %}
+  {% bootstrap_messages %}
   <h1> {{ course.name }} Admin </h1>
   {# Ugly fix? This should perhaps in view rather than in template? #}
    <div class="panel-group" id="export">
