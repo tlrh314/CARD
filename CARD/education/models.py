@@ -14,6 +14,11 @@ class Student(User):
     class Meta:
         proxy = True
 
+class CourseManager(models.Manager):
+    def create_course(self, name):
+        course = self.create(title=title)
+        return course
+
 class Course(models.Model):
     name = models.CharField(_('Full Name'), max_length=100, unique=True)
     slug = models.SlugField(_('Abbreviation'), max_length=15, \
@@ -31,6 +36,8 @@ class Course(models.Model):
     created = models.DateTimeField(auto_now_add = True)
     updated = models.DateTimeField(auto_now = True)
 
+    objects = CourseManager()
+
     def __unicode__(self):
         return self.name
 
@@ -38,20 +45,29 @@ class Course(models.Model):
         verbose_name = ('Course')
         verbose_name_plural = ('Courses')
 
+class LectureManager(models.Manager):
+    # Only require course, date, title and classification.
+    def create_lecture(self, course_pk, date, title, classification):
+        lecture = self.create(course_id=course_pk, date=date,title=title,\
+                classification=classification)
+        return lecture
+
 class Lecture(models.Model):
     course = models.ForeignKey(Course)
     date = models.DateTimeField(_('Date'))
-    lecturers = models.CharField(_('Lecturers'), max_length=150)
+    lecturers = models.CharField(_('Lecturers'), max_length=150, blank=True)
     title = models.CharField(_('Full Title'), max_length=150)
     slug = models.SlugField(_('Abbreviation'), max_length=15, \
             unique = True, blank=True)
-    abstract = models.TextField(_('Abstract'))
+    abstract = models.TextField(_('Abstract'), blank=True)
     # Move TYPES to Settings.
     classification = models.CharField(_('Type'), max_length=1, choices=TYPES)
     created = models.DateTimeField(auto_now = True)
     updated = models.DateTimeField(auto_now_add = True)
     attending = models.ManyToManyField('Student', null = True, blank = True, \
             related_name = _('LectureStudents'))
+
+    objects = LectureManager()
 
     def __unicode__(self):
         return u'%s on %s' % (self.course, self.date.strftime("%s at %sh" % \

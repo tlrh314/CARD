@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% block title %} CARD - Import Excel Database{% endblock %}
+
+{% block content %}
+{% if user.is_superuser %}
+  {% bootstrap_messages %}
+  <h1> Import successful</h1>
+
+  {{ book }} <br><br>
+{{ sheet }} <br><br>
+{{ valid }} <br><br>
+{{ msg }} <br><br>
+
+{% else %}
+  <p> You have no permission to view this page </p>
+{% endif %}
+
+{% endblock %}

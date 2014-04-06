@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, render_to_response
+from django.core.urlresolvers import reverse
 from django.views import generic
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
 from django.http import HttpResponse
-from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
 
@@ -18,9 +19,9 @@ from CARD.settings import TYPES
 
 import logging
 from collections import defaultdict
-import xlwt
+import xlwt, xlrd
+import string, random
 from datetime import datetime, date
-from string import uppercase
 
 logger = logging.getLogger('registration')
 
@@ -284,17 +285,133 @@ def save_to_xls(request, course_pk):
     xls.save(response)
     return response
 
+def quick_validate(sheet):
+    valid, msg = True, ''
+    if sheet.cell_value(2,0) != 'Student ID':
+        msg += 'A3 invalid. '
+        valid = False
+    if sheet.cell_value(2,1) != 'UvANetID':
+        msg += 'B3 invalid. '
+        valid = False
+    if sheet.cell_value(2,2) != 'First Name':
+        msg += 'C3 invalid. '
+        valid = False
+    if  sheet.cell_value(2,3) != 'Last Name':
+        msg += 'D3 invalid. '
+        valid = False
+    if sheet.cell_value(2,4) != 'Email':
+        msg += 'E3 invalid. '
+        valid = False
+    if sheet.cell_value(2,5) != 'Programme':
+        msg += '3F invalid. '
+        valid = False
+    if sheet.cell_value(2,6) != 'Vorig jaar aanwezig':
+        msg += '3F invalid. '
+        valid = False
+
+    return valid, msg
+
+def add_import_data(request, sheet, course_pk):
+    """
+    Rows contain per-student information.
+    Row 0, 1 and 2 are the header; 2 contains column names.
+
+    A3 trough G3 contains per-student variables. H3 - col(end of row-1)3
+    contains the lecture information. The last column is the total attendance.
+
+    Row nrows contains the sum-functions for per-lecture averages.
+    There are 2 whitelines between the last entry and the averages.
+
+    Assume quick-validation did not find weird stuff and the excel sheet is
+    valid. Also, remember the off-by one for xlrd and Excel row numbering.
+    """
+
+    # First create the lectures. Note that we only know the date!
+    for col_nr in range(7, sheet.ncols-1):
+        break
+        raw_date = sheet.cell_value(2, col_nr)
+        # Only day/Month. Add current year
+        raw_date += '/2014'
+        date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
+        title = 'Lecture ' + str(col_nr-6)
+        lecture = Lecture.objects.create_lecture(course_pk, date, \
+                title, 'R')
+        lecture.save()
+        break
+
+    for row_nr in range(3, sheet.nrows-3):
+        # Get or create student. Add data to student/profile.
+        other_id = unicode(sheet.cell_value(row_nr, 0)).split('.')[0]
+        UvANetID = unicode(sheet.cell_value(row_nr, 1)).split('.')[0]
+        # Student login will work with UvANetID's, but registration will
+        # use the other_id. All students started before Sept '10 may have
+        # Student ID's that differ from their UvANetID. Thanks to SIS...
+        try:
+            student = Student.objects.get(username__exact=UvANetID)
+        except:
+            # User does not exist, create new user.
+            email = sheet.cell_value(row_nr, 4)
+            chars = string.ascii_uppercase+string.digits
+            password = ''.join(random.choice(chars) for x in range(12))
+            first_name = sheet.cell_value(row_nr, 2)
+            last_name = sheet.cell_value(row_nr, 3)
+            surfConnextID = 'excel/None'
+            if Site._meta.installed:
+                site = Site.objects.get_current()
+            else:
+                site = RequestSite(request)
+            student = RegistrationProfile.objects.create_active_user(UvANetID, \
+                    email, password, first_name, last_name, surfConnextID, site)
+            profile = RegistrationProfile.objects.get(user_id=student)
+            profile.other_id = other_id
+            profile.programme = sheet.cell_value(row_nr, 5)
+            profile.offset = sheet.cell_value(row_nr, 6)
+            profile.save()
+            break
+
 @user_passes_test(lambda u: u.is_superuser)
 @csrf_protect
 def read_from_xls(request, course_pk):
 # https://stackoverflow.com/questions/3665379/django-and-xlrd-reading-from-memory/3665672#3665672
+
+    backup_url = reverse('education:export', kwargs={'course_pk': course_pk})
+    text = '<span class= "glyphicon glyphicon-floppy-save"></span> Export'
+    msg = '<span class="glyphicon glyphicon-warning-sign"></span> '+\
+                'Warning! Importing overwrites the current database. ' + \
+                'Be sure to <a href="%s">%s</a> first!' % \
+                (backup_url, text)
+    messages.add_message(request, messages.WARNING, msg)
+    msg = '<span class="glyphicon glyphicon-warning-sign"></span> '+\
+                'Warning! Make sure the Excel file has the same format as ' + \
+                'the exported file!'
+    messages.add_message(request, messages.WARNING, msg)
     if request.method == 'POST':
         form = XlsInputForm(request.POST, request.FILES)
         if form.is_valid():
             input_excel = request.FILES['input_excel']
             book = xlrd.open_workbook(file_contents=input_excel.read())
-            return render_to_response('education/import_excel.html', \
-                    {'rows':rows}, context_instance=RequestContext(request))
+            sheet = book.sheet_by_index(0)
+
+            # Quick and dirty validation of row 3.
+            valid, msg = quick_validate(sheet)
+            if valid:
+                add_import_data(request, sheet, course_pk)
+
+                msg = '<span class="glyphicon glyphicon-ok"></span> '+\
+                        'Import successfull!'
+                messages.add_message(request, messages.SUCCESS, msg)
+            else:
+                tmp = msg
+                msg = '<span class="glyphicon glyphicon-flash"></span> '+\
+                        'Import failed: ' + msg
+                messages.add_message(request, messages.ERROR, msg)
+
+            # This should eventually redirect / render_to_response to
+            # admin_course. Simply changing results in course_pk not passed.
+            return render_to_response('education/content_excel.html', \
+                    { 'book':book, 'sheet': sheet, 'valid': valid, \
+                    'msg': msg}, \
+                    context_instance=RequestContext(request))
     else:
         form = XlsInputForm()
 

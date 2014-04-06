@@ -7,6 +7,25 @@
 {% if user.is_superuser %}
   <h1> {{ course.name }} Admin </h1>
   {# Ugly fix? This should perhaps in view rather than in template? #}
+   <div class="panel-group" id="export">
+    <div class="btn-group btn-group-justified">
+      <div class="btn-group">
+        <a href="{% url 'education:export' course.id %}">
+          <button type="button" class="btn btn-default">
+           <span class= "glyphicon glyphicon-floppy-save"></span> Export
+          </button>
+        </a>
+      </div>
+      <div class="btn-group">
+        <a href="{% url 'education:import' course.id %}">
+          <button type="button" class="btn btn-default">
+           <span class= "glyphicon glyphicon-floppy-open"></span> Import
+          </button>
+        </a>
+      </div>
+    </div>
+   </div>
+
     <div class="panel-group" id="information">
       <div class="panel panel-default">
         <div class="panel-heading">
@@ -86,17 +105,6 @@
                 {% endfor %}
               </table>
             </div>
-          </div>
-        </div>
-      </div>
-      <div class="panel-group" id="export">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h3 class="panel-title">
-              <a href="{% url 'education:export' course.id %}">
-                Export
-              </a>
-            </h3>
           </div>
         </div>
       </div>
