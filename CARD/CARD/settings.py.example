@@ -102,13 +102,16 @@ TEMPLATE_CONTEXT_PROCESSORS = (
         "django.core.context_processors.media",
         "django.core.context_processors.static",
         "django.contrib.messages.context_processors.messages",
-        'django.core.context_processors.request',
+        "django.core.context_processors.request",
+        "django.core.context_processors.csrf",
         )
 
-TYPES = (('I', _('Programme Information')),
+TYPES = (
+        ('I', _('Programme Information')),
         ('A', _('Alumni Lecture')),
         ('T', _('Guided Tour')),
-        ('R', _('Regular')))
+        ('R', _('Regular')),
+)
 
 # Django-Registration settings
 # https://django-registration.readthedocs.org/en/latest/quickstart.html
@@ -133,33 +136,35 @@ EMAIL_USE_TLS = True
 # Custom RequireLoginMiddleware class in ~/app/CARD/middleware.py.
 # Required settings to enable password login by default.
 LOGIN_REQUIRED_URLS_EXCEPTIONS = (
-    r'^/accounts/', # enable users to login without redirect to login.
-    r'^/admin/', # password protected by admin views.
-    r'^/ivoauth/',
-    r'^/$',
+        r'^/accounts/', # enable users to login without redirect to login.
+        r'^/admin/', # password protected by admin views.
+        r'^/ivoauth/',
+        r'^/$',
 )
 LOGIN_REQUIRED_URLS = (
-    r'/(.*)$', # the index file specified in CARD/CARD/views.py may be viewed.
+        r'/(.*)$', # the index file specified in CARD/CARD/views.py may be viewed.
 )
 
 # Settings for IvoAuth wrapper
 IVOAUTH_TOKEN = "MySuperSecretToken"
 IVOAUTH_URL="MyIvOAuthURL"
-AUTHENTICATION_BACKENDS = ('registration.auth_backend.PasswordlessAuthBackend', \
-        'django.contrib.auth.backends.ModelBackend')
+AUTHENTICATION_BACKENDS = (
+        'registration.auth_backend.PasswordlessAuthBackend',
+        'django.contrib.auth.backends.ModelBackend'
+)
 
 # Settings for DataNose link
 DN_WEBSERVICE_URL="my-datanose-link-url"
 
 # Settings for django-bootstrap3.
 BOOTSTRAP3 = {
-    'jquery_url': '//code.jquery.com/jquery.min.js',
-    'base_url': '//netdna.bootstrapcdn.com/bootstrap/3.0.3/',
-    'css_url': None,
-    'theme_url': None,
-    'javascript_url': None,
-    'horizontal_label_class': 'col-md-2',
-    'horizontal_field_class': 'col-md-4',
+        'jquery_url': '//code.jquery.com/jquery.min.js',
+        'base_url': '//netdna.bootstrapcdn.com/bootstrap/3.0.3/',
+        'css_url': None,
+        'theme_url': None,
+        'javascript_url': None,
+        'horizontal_label_class': 'col-md-2',
+        'horizontal_field_class': 'col-md-4',
 }
 
 LOGGING = {
