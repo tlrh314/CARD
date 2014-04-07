@@ -93,6 +93,7 @@
             <div class="panel-body">
               <table class="table">
                 <tr><td><b>Student ID</b></td><td><b>Name</b></td>
+                <td><b>Last Year</b></td>
                   {% for abbreviation, fullname in TYPES %}
                     <td><b>{{ fullname }}</b></td>
                   {% endfor %}
@@ -100,6 +101,7 @@
                 {% for student in course.student.all%}
                   <tr><td><a href="{% url 'education:admin_student' course.id student.id %}">{{ student.username}}</a></td>
                   <td>{{ student.first_name }} {{ student.last_name }}</td>
+                  <td>{% lookup attendance student.username 'offset' %}</td>
                     {% for abbreviation, fullname in TYPES %}
                       <td>{% lookup attendance student.username abbreviation %}</td>
                     {% endfor %}

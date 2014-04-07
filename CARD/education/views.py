@@ -57,7 +57,11 @@ class CourseView(generic.DetailView):
                     progress += 1
 
         # Set visited, total and the percentage progress for progressbar.
-        context['visited'] = progress
+        profile = RegistrationProfile.objects.get(user_id=\
+                self.request.user)
+        offset = profile.offset
+        context['offset'] = offset
+        context['visited'] = progress + offset
         context['total_lectures'] = LECTURES_REQUIRED
         progress = 100*float(progress)/LECTURES_REQUIRED
         context['progress'] = progress
@@ -100,6 +104,11 @@ class AdminCourseView(generic.DetailView):
                     context['classification'] = lecture.classification
                     attendance[student.username][lecture.classification] += 1
                     attendance[student.username]['total'] += 1
+
+            profile = RegistrationProfile.objects.get(user_id=student)
+            offset = profile.offset
+            attendance[student.username]['total'] += offset
+            attendance[student.username]['offset'] = offset
         context['attendance'] = attendance
         context['TYPES'] = TYPES
 
@@ -194,6 +203,22 @@ def base_26_gen(x):
 def base_26_chr(x):
     return ''.join(string.uppercase[i] for i in reversed(list(base_26_gen(x))))
 
+def get_excel_col_names(x):
+    # fails for aa, ab, .., az because a is treated as a zero
+    col_names = [base_26_chr(x) for x in range(x)]
+
+    # add aa, ab, .., az in the utmost ugly way possible.
+    aa_trough_az = ['AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', \
+            'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS',\
+            'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ']
+    if x < 26:
+        result = col_names[0:x+1]
+    elif x < 52:
+        result = col_names[0:26] + aa_trough_az[0:(x-25)]
+    else:
+        result = col_names[0:26] + aa_trough_az + col_names[26:x-25]
+    return result
+
 # Error with non-authenticated users (timeout). Perhaps examine
 # https://djangosnippets.org/snippets/1768/ for a fix?
 @user_passes_test(lambda u: u.is_superuser)
@@ -238,20 +263,23 @@ def save_to_xls(request, course_pk):
     header = False;
     for student in course.student.all():
         #  Insert student details. Data according to current Orientatie format.
-        profile = RegistrationProfile.objects.get(user_id=student)
-        sheet.write(row, 0, profile.other_id, style=borders)
+        try:
+            profile = RegistrationProfile.objects.get(user_id=student)
+            sheet.write(row, 0, profile.other_id, style=borders)
+            sheet.write(row, 5, profile.programme , style=borders)
+            sheet.write(row, 6, profile.offset , style=borders)
+        except:
+            pass # Perhaps catch this error in a more elegant way.
         sheet.write(row, 1, student.username , style=borders)
         sheet.write(row, 2, student.first_name , style=borders)
         sheet.write(row, 3, student.last_name , style=borders)
         sheet.write(row, 4, student.email , style=borders)
-        sheet.write(row, 5, profile.programme , style=borders)
-        sheet.write(row, 6, profile.offset , style=borders)
 
         # Insert student attendance data: 1 for attending, 0 for absent.
         col = 7
         for lecture in Lecture.objects.filter(course_id=course.id):
             if not header:
-                date = lecture.date.strftime("%s" % "%d/%b")
+                date = lecture.date.strftime("%s" % "%d/%b/%Y")
                 sheet.write(2, col, date , style=boldborders)
             attending = lecture.attending.all()
             if student in attending: val = 1
@@ -262,7 +290,7 @@ def save_to_xls(request, course_pk):
         row += 1
 
     # Create sum function for total per-lecture count.
-    col_names = [base_26_chr(x) for x in range(col)]
+    col_names = get_excel_col_names(col)
     for i in range(7, col):
         sheet.write(row+2, i, xlwt.Formula('SUM(%(ncol)s4:%(ncol)s%(myRow)s)'\
                 % { 'ncol': col_names[i], 'myRow': row}),style=plain)
@@ -307,7 +335,7 @@ def quick_validate(sheet):
         msg += '3F invalid. '
         valid = False
     if sheet.cell_value(2,6) != 'Vorig jaar aanwezig':
-        msg += '3F invalid. '
+        msg += '3G invalid. '
         valid = False
 
     return valid, msg
@@ -330,15 +358,15 @@ def add_import_data(request, sheet, course_pk):
     # Firstly, create the lectures. Note that we only know the date w/o the year!
     for col_nr in range(7, sheet.ncols-1):
         raw_date = sheet.cell_value(2, col_nr)
-        # Only day/Month. Add current year
-        raw_date += '/2014'
+        # raw_date += '/2014'
         date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
         title = 'Lecture ' + str(col_nr-6)
+        slug = 'lecture-' + str(col_nr-6)
         try:
             lecture = Lecture.objects.get(date__exact=date)
         except Lecture.DoesNotExist:
             lecture = Lecture.objects.create_lecture(course_pk, date, \
-                    title, 'R')
+                    title, 'R', slug)
             lecture.save()
 
     if Site._meta.installed:
@@ -371,27 +399,37 @@ def add_import_data(request, sheet, course_pk):
             profile.offset = sheet.cell_value(row_nr, 6)
             profile.save()
             student = Student.objects.get(pk=new_user.id)
-        try:
-            student.StudentCourses.add(course_pk)
-            student.save()
-        except:
-            pass
+        student.StudentCourses.add(course_pk)
+        student.save()
 
         # Lastly, add the attendance of known Lectures to known Students.
+        # It might be wise to loop for cols for row to save queries?
         for col_nr in range(7, sheet.ncols-1):
             raw_date = sheet.cell_value(2, col_nr)
-            raw_date += '/2014'
+            # raw_date += '/2014'
             date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
             lecture = Lecture.objects.get(date__exact=date)
             status = sheet.cell_value(row_nr, col_nr)
             if status == 1:
                 lecture.attending.add(student)
+                lecture.save()
 
 
 @user_passes_test(lambda u: u.is_superuser)
 @csrf_protect
 def read_from_xls(request, course_pk):
 # https://stackoverflow.com/questions/3665379/django-and-xlrd-reading-from-memory/3665672#3665672
+
+    """
+        Requires xlrd and helper functions base_26_chr (thus base_26_chr).
+
+        This function enables importing a xls database of the course attendance
+        data. The format used is the current format used for Orientatie.
+        Note that there is an 'off-by-one' due to xlrd's count starts at row 0,
+        whereas Excel starts at row 1.
+
+        Be cautious in using this function as unexpected behaviour may occur!
+    """
 
     backup_url = reverse('education:export', kwargs={'course_pk': course_pk})
     text = '<span class= "glyphicon glyphicon-floppy-save"></span> Export'
@@ -414,10 +452,17 @@ def read_from_xls(request, course_pk):
             # Quick and dirty fix: validation of row 3.
             valid, msg = quick_validate(sheet)
             if valid:
-                #add_import_data(request, sheet, course_pk)
-                msg = '<span class="glyphicon glyphicon-ok"></span> '+\
-                        'Import successfull!'
-                messages.add_message(request, messages.SUCCESS, msg)
+                try:
+                    add_import_data(request, sheet, course_pk)
+                    msg = '<span class="glyphicon glyphicon-ok"></span> '+\
+                            'Import successfull!'
+                    messages.add_message(request, messages.SUCCESS, msg)
+                except:
+                    msg = '<span class="glyphicon glyphicon-flash"></span> '+\
+                            'Import failed due to unknown reasons.'+\
+                            'The data may have been compromised, mail admin!'
+                    messages.add_message(request, messages.ERROR, msg)
+
             else:
                 tmp = msg
                 msg = '<span class="glyphicon glyphicon-flash"></span> '+\
@@ -436,4 +481,3 @@ def read_from_xls(request, course_pk):
 
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
-

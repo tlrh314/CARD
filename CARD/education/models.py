@@ -47,9 +47,9 @@ class Course(models.Model):
 
 class LectureManager(models.Manager):
     # Only require course, date, title and classification.
-    def create_lecture(self, course_pk, date, title, classification):
+    def create_lecture(self, course_pk, date, title, classification, slug):
         lecture = self.create(course_id=course_pk, date=date,title=title,\
-                classification=classification)
+                classification=classification, slug=slug)
         return lecture
 
 class Lecture(models.Model):
@@ -60,7 +60,6 @@ class Lecture(models.Model):
     slug = models.SlugField(_('Abbreviation'), max_length=15, \
             unique = True, blank=True)
     abstract = models.TextField(_('Abstract'), blank=True)
-    # Move TYPES to Settings.
     classification = models.CharField(_('Type'), max_length=1, choices=TYPES)
     created = models.DateTimeField(auto_now = True)
     updated = models.DateTimeField(auto_now_add = True)
@@ -70,8 +69,8 @@ class Lecture(models.Model):
     objects = LectureManager()
 
     def __unicode__(self):
-        return u'%s on %s' % (self.course, self.date.strftime("%s at %sh" % \
-            ("%B %d, %Y", "%H:%M")))
+        return u'%s on %s' % (self.course, self.date.strftime("%s" % \
+            ("%d %b %Y")))
 
     class Meta:
         verbose_name = ('Lecture')
