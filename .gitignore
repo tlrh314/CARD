@@ -81,3 +81,6 @@ settings.py
 *.swp
 
 *.tmp
+
+xlrd
+xlwt
