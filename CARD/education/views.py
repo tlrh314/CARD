@@ -97,6 +97,7 @@ class AdminCourseView(generic.DetailView):
             for abbreviation, fullname in TYPES:
                 attendance[student.username][abbreviation] = 0
             attendance[student.username]['total'] = 0
+            attendance[student.username]['offset'] = 0
 
             # Calculate the attendance for all lectures in this course.
             for lecture in Lecture.objects.filter(course_id=current_course.id):
