@@ -202,7 +202,6 @@ def ivoauth_callback(request):
         UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
         try:
             user = User.objects.get(username__exact=UvANetID)
-            # Could go wrong if user does exist, but profile does not exist.
             profile = RegistrationProfile.objects.get(user_id=user)
 
             # User has been created in attendance registration. Update data.
@@ -217,12 +216,8 @@ def ivoauth_callback(request):
                         "surfconext/" + attributes["saml:sp:NameID"]["Value"]
                 profile.save()
                 logger.debug("Updated '{}' with surfconnext data".format(user))
-            # User exists, log in.
-            user = authenticate(username=UvANetID)
-            login(request, user)
-            logger.debug("Logged in user '{}'".format(user))
-        except:
-            # User does not exist, create new user. Error if no profile!
+        except User.DoesNotExist:
+            # User does not exist, create new user.
             username = attributes["urn:mace:dir:attribute-def:uid"][0]
             email = attributes["urn:mace:dir:attribute-def:mail"][0]
             chars = string.ascii_uppercase+string.digits
@@ -237,10 +232,16 @@ def ivoauth_callback(request):
             user = RegistrationProfile.objects.create_active_user(username, \
                     email, password, first_name, last_name, surfConnextID, site)
             logger.debug("Created new user '" + user.username+ "'")
-
-            user = authenticate(username=user.username)
-            login(request, user)
-            logger.debug("Logged in user '{}'".format(user))
+        # If the user does exist, but has no profile we get an error. Catch it!
+        except RegistrationProfile.DoesNotExist:
+            user.surfConnextID = "surfconext/" + \
+                    attributes["saml:sp:NameID"]["Value"]
+            profile = RegistrationProfile.objects.create_profile(user)
+        # User exists, log in.
+        user = authenticate(username=user.username)
+        logger.debug("Created profile for '{}'".format(user))
+        login(request, user)
+        logger.debug("Logged in user '{}'".format(user))
     else:
         logger.debug("Authentication failed")
     return HttpResponseRedirect(next_page)
