@@ -39,6 +39,8 @@
             <table class="table">
               <tr><td><b>Date</b></td><td><b>Lecturers</b></td>
               <td><b>Title</b></td><td><b>Type</b></td><td><b>Status</b></td>
+                <tr><td>Last Year</td><td>-</td><td>-</td><td>-</td>
+                <td><span class="label label-info">{{ offset }} visits</span></td>
               {% for lecture in course.lecture_set.all %}
                 <tr><td>{{ lecture.date }}</td>
                 <td>{{ lecture.lecturers }}</td>

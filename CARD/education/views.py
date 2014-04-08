@@ -133,6 +133,8 @@ class AdminStudentView(generic.DetailView):
         # Initialize the context and set up the current_course.
         context = super(AdminStudentView, self).get_context_data(**kwargs)
         student = Student.objects.get(id=self.kwargs.get("student_pk"))
+        profile = RegistrationProfile.objects.get(user_id=student)
+        context['offset'] = profile.offset
         context['student'] = student
 
         # Initialize 2D array with keys UvANetID and type of Lecture.
@@ -142,7 +144,7 @@ class AdminStudentView(generic.DetailView):
         course_list = []
         for course in student.StudentCourses.all():
             course_list.append(course)
-            number_attended = 0
+            number_attended = profile.offset
             for lecture in Lecture.objects.filter(course_id=course.id):
                 if student in lecture.attending.all():
                     status[course.id][lecture.id] = ('success', 'Present')
