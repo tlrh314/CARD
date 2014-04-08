@@ -3,6 +3,7 @@ from education.models import Course, Lecture
 
 # https://stackoverflow.com/questions/8043881/django-admin-manytomanyfield
 class LectureAdmin(admin.ModelAdmin):
+    filter_horizontal = ('attending',)
     pass
 
 class LectureInline(admin.StackedInline):
