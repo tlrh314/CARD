@@ -146,7 +146,9 @@ class AdminStudentView(generic.DetailView):
             course_list.append(course)
             number_attended = profile.offset
             for lecture in Lecture.objects.filter(course_id=course.id):
-                if student in lecture.attending.all():
+                if lecture.in_future():
+                    status[course.id][lecture.id] = ('info', 'Future')
+                elif student in lecture.attending.all():
                     status[course.id][lecture.id] = ('success', 'Present')
                     number_attended += 1
                 else:

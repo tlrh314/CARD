@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from CARD.settings import TYPES
 
 import datetime
+from django.utils import timezone
 
 class StudentManager(models.Manager):
     def get_query_set(self):
@@ -75,3 +76,7 @@ class Lecture(models.Model):
     class Meta:
         verbose_name = ('Lecture')
         verbose_name_plural = ('Lectures')
+
+    def in_future(self):
+        now = timezone.now()
+        return now <= self.date
