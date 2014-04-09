@@ -120,8 +120,9 @@ class RegisterAttendanceForm(forms.Form):
                 elif enrolled == 'false':
                     sis = '<a href="http://www.sis.uva.nl">SIS</a>'
                     raise forms.ValidationError(
-                            _('%(UvANetID)s is not enrolled for %(course)s at '+\
-                                    'DataNose. Please enrol at %(SIS)s.'),
+                            _(flash+'%(UvANetID)s is not enrolled for %(course)s'+\
+                                    'at DataNose. Please enrol at %(SIS)s. ' +\
+                                    '<br>Contact the coordinator now.'),
                             code = 'invalid',
                             params = {'UvANetID': UvANetID,\
                                     'course': course ,\

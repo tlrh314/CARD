@@ -123,6 +123,17 @@ class AdminLectureView(generic.DetailView):
     model = Lecture
     pk_url_kwarg = 'lecture_pk'
     template_name = 'education/admin_lecture.html'
+    def get_context_data(self, **kwargs):
+        # Initialize the context and set up the current_course.
+        context = super(AdminLectureView, self).get_context_data(**kwargs)
+
+        total = 0
+        lecture = Lecture.objects.get(id=self.kwargs.get("lecture_pk"))
+        for student in lecture.attending.all():
+            total += 1
+        context['total'] = total
+
+        return context
 
 class AdminStudentView(generic.DetailView):
     model = Student
