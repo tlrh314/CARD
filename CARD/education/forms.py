@@ -14,6 +14,7 @@ from os.path import splitext
 from CARD.settings import DN_WEBSERVICE_URL
 
 logger = logging.getLogger('education')
+flash = '<span class="glyphicon glyphicon-flash"></span> '
 
 class RegisterAttendanceForm(forms.Form):
     """
@@ -43,8 +44,28 @@ class RegisterAttendanceForm(forms.Form):
         cleaned_data = super(RegisterAttendanceForm, self).clean()
         try:
             UvANetID = cleaned_data['UvANetID']
-            # When student is scanned by RFID-reader, id starts with '10'
-            # We possibly need to add an if-statement here?
+            """
+            When student is scanned by RFID-reader, id starts with '1'.
+            The length is fixed to 9 digits. A studentID has 8 digits.
+            If the UvANetID is used as StudentID it has leading 0's up to
+            a number of 8 digits. This is NEDAP 9864830 specific behaviour!
+            UvA Employee/HvA numbers should start with a leading 2, then 0's up
+            to a fixed number of 9 digits to get the employee/studentID number.
+            """
+            if len(UvANetID) == 9 and UvANetID[0] == '1':
+                UvANetID = UvANetID[1:] # remove the 1
+                while UvANetID[0] == '0':
+                    UvANetID = UvANetID[1:] # remove the leading 0's
+            if len(UvANetID) == 9 and UvANetID[0] == '2':
+                UvANetID = UvANetID[1:] # remove the 2
+                while UvANetID[0] == '0':
+                    UvANetID = UvANetID[1:] # remove the leading 0's
+                raise forms.ValidationError(
+                        _(flash+'ID %(id)s is possibly an employee number. '+\
+                        'Please use your StudentID card for CARD.'),
+                        code = 'invalid',
+                        params={'id': UvANetID},
+                        )
         except KeyError:
             return cleaned_data
         # Very ugly hack. We need to access the request?!!
@@ -52,12 +73,15 @@ class RegisterAttendanceForm(forms.Form):
         site = cleaned_data['site']
         coure, lecture, student = None, None, None
         if not lecture_pk:
-            raise forms.ValidationError("Error: lecture_pk not provided.")
+            raise forms.ValidationError(
+                    _(flash+'Whops, the lecture_pk is not provided.'),
+                    code = 'invalid'
+                    )
         try:
             lecture = Lecture.objects.get(id=lecture_pk)
         except Lecture.DoesNotExist:
             raise forms.ValidationError(
-                    _('Lecture %(pk)s does not exist'),
+                    _(flash+'Lecture %(pk)s does not exist'),
                     code = 'invalid',
                     params={'pk': lecture_pk},
                     )
@@ -67,56 +91,72 @@ class RegisterAttendanceForm(forms.Form):
         try:
             student = Student.objects.get(\
                     username__iexact=UvANetID)
-            if course in student.StudentCourses.all():
-                if student in lecture.attending.all():
-                    raise forms.ValidationError(
-                             _('%(UvANetID)s is already attending %(lecture)s'),
-                             code='invalid',
-                             params={'UvANetID': student.username,\
-                                     'lecture' : lecture },
-                             )
-                else:
+        except Student.DoesNotExist:
+            # Either this student is not in our local database yet,
+            # or this student enrolled per or prior to september 2010.
+
+            # If UvANetID != StudentID, we might have it on file in profile.
+            try:
+                profile = RegistrationProfile.objects.get(\
+                        other_id__iexact=UvANetID)
+                student = Student.objects.get(pk=profile.user_id)
+            except RegistrationProfile.DoesNotExist:
+                # Not a boolean. Return value is 'true' or 'false'.
+                enrolled = self.datanose_enrolled(UvANetID, course)
+                if enrolled == 'true':
+                    # create Student; surfConnextID = 'None'
+                    chars = string.ascii_uppercase+string.digits
+                    password = ''.join(random.choice(chars) for x in range(12))
+                    user = RegistrationProfile.objects.create_active_user(UvANetID,\
+                            '', password, '', '', 'None', site)
+                    # add Student to Course.student
+                    student = Student.objects.get(username__iexact=user.username)
+                    student.StudentCourses.add(course)
+                    student.save()
+                    # add Student to Lecture.attending
                     lecture.attending.add(student)
                     lecture.save()
-        except Student.DoesNotExist:
-            # Not a boolean. Return value is 'true' or 'false'.
-            enrolled = self.datanose_enrolled(UvANetID, course)
-            if enrolled == 'true':
-                # create Student; surfConnextID = 'None'
-                chars = string.ascii_uppercase+string.digits
-                password = ''.join(random.choice(chars) for x in range(12))
-                user = RegistrationProfile.objects.create_active_user(UvANetID,\
-                        '', password, '', '', 'None', site)
-                # add Student to Course.student
-                student = Student.objects.get(username__iexact=user.username)
-                student.StudentCourses.add(course)
-                student.save()
-                # add Student to Lecture.attending
+
+                elif enrolled == 'false':
+                    sis = '<a href="http://www.sis.uva.nl">SIS</a>'
+                    raise forms.ValidationError(
+                            _('%(UvANetID)s is not enrolled for %(course)s at '+\
+                                    'DataNose. Please enrol at %(SIS)s.'),
+                            code = 'invalid',
+                            params = {'UvANetID': UvANetID,\
+                                    'course': course ,\
+                                    'SIS': sis },
+                            )
+                else:
+                    raise forms.ValidationError(
+                            _('Unexpected DataNose return: %(enrolled)s'),
+                            code = 'invalid',
+                            params = {'enrolled': enrolled },
+                            )
+
+        # This block handles registration of students on file.
+        if course in student.StudentCourses.all():
+            if student in lecture.attending.all():
+                raise forms.ValidationError(
+                         _(flash+'%(UvANetID)s is already attending %(lect)s'),
+                         code='invalid',
+                         params={'UvANetID': student.username,\
+                                 'lect' : lecture },
+                         )
+            else:
                 lecture.attending.add(student)
                 lecture.save()
+        else:
+            raise forms.ValidationError(
+                    _(flash+'%(UvANetID)s is not enrolled for %(course)s '+\
+                            'in CARD. Not checked at DataNose'),
+                    code = 'invalid',
+                    params = {'UvANetID': UvANetID,\
+                            'course': course, },
+                    )
+        # Alternatively, we can add the student to the course locally.
+        # We could either check this at DataNose, or not.
 
-                #raise forms.ValidationError(
-                #        _('%(UvANetID)s enrolled for %(course)s at DataNose'),
-                #        code = 'invalid',
-                #        params = {'UvANetID': UvANetID,\
-                #                'course': course },
-                #        )
-            elif enrolled == 'false':
-                sis = '<a href="http://www.sis.uva.nl">SIS</a>'
-                raise forms.ValidationError(
-                        _('%(UvANetID)s is not enrolled for %(course)s at '+\
-                                'DataNose. Please enrol at %(SIS)s.'),
-                        code = 'invalid',
-                        params = {'UvANetID': UvANetID,\
-                                'course': course ,\
-                                'SIS': sis },
-                        )
-            else:
-                raise forms.ValidationError(
-                        _('Unexpected DataNose return: %(enrolled)s'),
-                        code = 'invalid',
-                        params = {'enrolled': enrolled },
-                        )
         return cleaned_data
 
 
