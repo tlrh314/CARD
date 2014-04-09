@@ -117,7 +117,7 @@ TYPES = (
 # https://django-registration.readthedocs.org/en/latest/quickstart.html
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/ivoauth'
-SESSION_COOKIE_AGE = 3600 # seconds
+SESSION_COOKIE_AGE = 3*3600 # seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 REGISTRATION_OPEN = False
 ACCOUNT_ACTIVATION_DAYS = 1
@@ -170,16 +170,54 @@ BOOTSTRAP3 = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(asctime)s [%(levelname)s] %(module)s'+\
+                    '%(name)s %(process)d %(thread)d: %(message)s'
+        },
+        'simple': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
     'handlers': {
         'file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': '/srv/ZoltaN/logs/debug.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/path/to/logs/request.log',
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter': 'simple',
+        },
+        'registration': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/path/to/logs/CARD-registration.log',
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter': 'simple',
+        },
+        'education': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/path/to/logs/CARD-education.log',
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
+            'formatter': 'simple',
         },
     },
     'loggers': {
         'django.request': {
             'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'registration': {
+            'handlers': ['registration'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'education': {
+            'handlers': ['education'],
             'level': 'DEBUG',
             'propagate': True,
         },

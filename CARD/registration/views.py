@@ -28,7 +28,7 @@ from django.contrib.auth.models import User
 
 from CARD.settings import LOGIN_REDIRECT_URL, IVOAUTH_TOKEN, IVOAUTH_URL
 
-logger = logging.getLogger('registration')
+logger = logging.getLogger(__name__)
 
 class _RequestPassingFormView(FormView):
     """
@@ -162,6 +162,7 @@ class ActivationView(TemplateView):
 
 
 def ivoauth(request):
+    logger.debug("Now running ivoauth.")
     next_page = request.GET.get('next', '/')
     callback_url = str(request.build_absolute_uri("ivoauth/callback")) + \
             "/?next=" + next_page + "&ticket={#ticket}"
@@ -170,39 +171,41 @@ def ivoauth(request):
         content = json.loads(urlopen(IVOAUTH_URL + "/ticket",
                              urlencode(post_data)).read())
     except HTTPError:
-        logger.error("Invalid url")
+        logger.error("Invalid url.")
         return HttpResponseBadRequest()
 
     if content["status"] == "success":
-        logger.debug("IVO authentication successful")
+        logger.debug("ivoauth ticket request successful.")
         return HttpResponseRedirect(IVOAUTH_URL + "/login/" +
                                     content["ticket"])
     else:
-        logger.debug("IVO authentication failed")
+        logger.debug("ivoauth failed.")
     return HttpResponseBadRequest()
 
 
 def ivoauth_callback(request):
+    logger.debug("Now running ivoauth_calback.")
     next_page = request.GET.get('next', '/')
     ticket = request.GET.get("ticket", "")
     if not ticket:
-        logger.error("no ticket")
+        logger.error("No ticket.")
     url = IVOAUTH_URL + "/status"
     post_data = [('token', IVOAUTH_TOKEN), ('ticket', ticket)]
     try:
         content = urlopen(url, urlencode(post_data)).read()
     except HTTPError:
-        logger.error("Invalid url")
+        logger.error("Invalid url.")
         return HttpResponseBadRequest()
 
     content = json.loads(content)
     if content["status"] == "success":
-        logger.debug("Authentication successful")
+        logger.debug("ivoauth_callback successful.")
         attributes = content["attributes"]
         UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
         try:
             user = User.objects.get(username__exact=UvANetID)
             profile = RegistrationProfile.objects.get(user_id=user)
+            logger.debug("Found user '{}' and profile.".format(user))
 
             # User has been created in attendance registration. Update data.
             if profile.surfConnextID == 'None':
@@ -217,6 +220,7 @@ def ivoauth_callback(request):
                 profile.save()
                 logger.debug("Updated '{}' with surfconnext data".format(user))
         except User.DoesNotExist:
+            logger.debug("User '{}' does not exist.".format(UvANetID))
             # User does not exist, create new user.
             username = attributes["urn:mace:dir:attribute-def:uid"][0]
             email = attributes["urn:mace:dir:attribute-def:mail"][0]
@@ -231,23 +235,24 @@ def ivoauth_callback(request):
                 site = RequestSite(request)
             user = RegistrationProfile.objects.create_active_user(username, \
                     email, password, first_name, last_name, surfConnextID, site)
-            logger.debug("Created new user '" + user.username+ "'")
+            logger.debug("Created new user '{}'.".format(user.username))
         # If the user does exist, but has no profile we get an error. Catch it!
         except RegistrationProfile.DoesNotExist:
+            logger.debug("Profile of '{}' does not exist; create.".format(UvANetID))
             user.surfConnextID = "surfconext/" + \
                     attributes["saml:sp:NameID"]["Value"]
             profile = RegistrationProfile.objects.create_profile(user)
         # User exists, log in.
         user = authenticate(username=user.username)
-        logger.debug("Created profile for '{}'".format(user))
         login(request, user)
-        logger.debug("Logged in user '{}'".format(user))
+        logger.debug("Logged in user '{}'.".format(user))
     else:
-        logger.debug("Authentication failed")
+        logger.debug("ivoauth Callback failed.")
     return HttpResponseRedirect(next_page)
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
 
 def logout_user(request):
+    logger.debug("Logged out user '{}'.".format(request.user.username))
     logout(request)
     return HttpResponseRedirect(IVOAUTH_URL + "/logout")

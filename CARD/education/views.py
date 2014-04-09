@@ -23,7 +23,7 @@ import xlwt, xlrd
 import string, random
 from datetime import datetime, date
 
-logger = logging.getLogger('registration')
+logger = logging.getLogger(__name__)
 
 LECTURES_REQUIRED = 25
 
