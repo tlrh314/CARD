@@ -227,7 +227,8 @@ def ivoauth_callback(request):
             chars = string.ascii_uppercase+string.digits
             password = ''.join(random.choice(chars) for x in range(12))
             first_name = attributes["urn:mace:dir:attribute-def:givenName"][0]
-            last_name = attributes["urn:mace:dir:attribute-def:cn"][0]
+            last_name = attributes["urn:mace:dir:attribute-def:cn"][0]\
+                    .split('.')[-1] # Delete initials
             surfConnextID = "surfconext/" + attributes["saml:sp:NameID"]["Value"]
             if Site._meta.installed:
                 site = Site.objects.get_current()
