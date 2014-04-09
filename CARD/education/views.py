@@ -119,10 +119,18 @@ class AdminCourseView(generic.DetailView):
     #course = Course.objects.get(pk=xxx)
     #return course.student.all()
 
+class AdminLectureList(generic.ListView):
+    template_name = 'education/admin_lecture_overview.html'
+    context_object_name = 'all_lecture_list'
+
+    def get_queryset(self):
+        return Lecture.objects.all
+
 class AdminLectureView(generic.DetailView):
     model = Lecture
     pk_url_kwarg = 'lecture_pk'
     template_name = 'education/admin_lecture.html'
+
     def get_context_data(self, **kwargs):
         # Initialize the context and set up the current_course.
         context = super(AdminLectureView, self).get_context_data(**kwargs)

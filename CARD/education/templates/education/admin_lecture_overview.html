@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}CARD - Courses Admin{% endblock %}
+
+{% block content %}
+{% if user.is_superuser %}
+  <h1>Lectures Admin</h1>
+  {% if all_lecture_list %}
+  <table class="table">
+    <tr><td><b>Course</b></td><td><b>Lecture</b></td><td><b>Register</b></td>
+      {% for lecture in all_lecture_list %}
+        <tr><td>
+          <a href="{% url 'education:admin_course' lecture.course.id %}">
+            {{ lecture.course.name }}
+          </a>
+        </td>
+        <td>
+          <a href="{% url 'education:admin_lecture' lecture.course.id lecture.id %}">
+            {{ lecture.title }} info
+            <span class ="glyphicon glyphicon-info-sign"></span>
+          </a>
+        </td>
+        <td>
+         <a href="{% url 'education:register_form' lecture.course.id lecture.id %}">
+           {{ lecture.name }} Register attendance
+           <span class ="glyphicon glyphicon-pencil"></span>
+         </a>
+       </td>
+    {% endfor %}
+  </table>
+  {% else %}
+    <p>No courses are available.</p>
+  {% endif %}
+{% else %}
+  <p> You have no permission to view this page </p>
+{% endif %}
+{% endblock %}

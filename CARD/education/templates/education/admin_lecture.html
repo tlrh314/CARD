@@ -32,6 +32,20 @@
       </div>
     </div>
 
+    <div class="panel-group" id="lectures">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">
+            <a href="{% url 'education:register_form' lecture.course.pk lecture.pk %}">
+              Register attendance
+              <span class= "glyphicon glyphicon-pencil"></span>
+            </a>
+            </a>
+          </h3>
+        </div>
+      </div>
+    </div>
+
     <div class="panel-group" id="students">
       <div class="panel panel-default">
         <div class="panel-heading">

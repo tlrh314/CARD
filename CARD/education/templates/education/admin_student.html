@@ -46,7 +46,12 @@
                 <td>{{ lecture.lecturers }}</td>
                 <td>
                   <a href="{% url 'education:admin_lecture' course.pk lecture.pk %}">
-                    {{ lecture.title }}
+                    {{ lecture.title }} info
+                    <span class ="glyphicon glyphicon-info-sign"></span>
+                  </a> |
+                  <a href="{% url 'education:register_form' course.pk lecture.pk %}">
+                    Register attendance
+                    <span class= "glyphicon glyphicon-pencil"></span>
                   </a>
                 </td>
                   <td>{{ lecture.get_classification_display }}</td>

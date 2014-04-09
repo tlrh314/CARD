@@ -68,7 +68,12 @@
                   <td>{{ lecture.lecturers }}</td>
                   <td>
                     <a href="{% url 'education:admin_lecture' course.pk lecture.pk %}">
-                      {{ lecture.title }}
+                      {{ lecture.title }} info
+                      <span class= "glyphicon glyphicon-info-sign"></span>
+                    </a> |
+                    <a href="{% url 'education:register_form' course.pk lecture.pk %}">
+                    Register attendance
+                      <span class= "glyphicon glyphicon-pencil"></span>
                     </a>
                   </td>
                     <td>{{ lecture.get_classification_display  }}</td>
@@ -99,7 +104,8 @@
                   {% endfor %}
                   <td><b>Total</b></td>
                 {% for student in course.student.all%}
-                  <tr><td><a href="{% url 'education:admin_student' course.id student.id %}">{{ student.username}}</a></td>
+                  <tr><td><a href="{% url 'education:admin_student' course.id student.id %}">{{ student.username}}
+                        <span class= "glyphicon glyphicon-info-sign"></span></a></td>
                   <td>{{ student.first_name }} {{ student.last_name }}</td>
                   <td>{% lookup attendance student.username 'offset' %}</td>
                     {% for abbreviation, fullname in TYPES %}
