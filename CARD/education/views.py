@@ -63,7 +63,7 @@ class CourseView(generic.DetailView):
         context['offset'] = offset
         context['visited'] = progress + offset
         context['total_lectures'] = LECTURES_REQUIRED
-        progress = 100*float(progress)/LECTURES_REQUIRED
+        progress = 100*float(progress+offset)/LECTURES_REQUIRED
         context['progress'] = progress
 
         return context
