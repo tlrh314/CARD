@@ -24,4 +24,6 @@ urlpatterns = patterns('',
             name='export'),
         url(r'(?P<course_pk>\d+)/import/$', views.read_from_xls, \
             name='import'),
+        url(r'barcode/$', views.Barcode.as_view(), \
+            name='import'),
         )

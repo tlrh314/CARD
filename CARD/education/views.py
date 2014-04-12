@@ -12,7 +12,7 @@ from django.template import RequestContext
 from registration.views import _RequestPassingFormView
 from registration.models import RegistrationProfile
 
-from education.models import Student, Course, Lecture
+from education.models import Student, Course, Lecture, Barcode
 from education.forms import RegisterAttendanceForm, XlsInputForm
 
 from CARD.settings import TYPES
@@ -93,6 +93,7 @@ class AdminCourseView(generic.DetailView):
 
         # Initialize 2D array with keys UvANetID and type of Lecture.
         attendance = defaultdict(dict)
+        lectures_list = Lecture.objects.filter(course_id=current_course.id)
         for student in current_course.student.all():
             for abbreviation, fullname in TYPES:
                 attendance[student.username][abbreviation] = 0
@@ -100,7 +101,7 @@ class AdminCourseView(generic.DetailView):
             attendance[student.username]['offset'] = 0
 
             # Calculate the attendance for all lectures in this course.
-            for lecture in Lecture.objects.filter(course_id=current_course.id):
+            for lecture in lectures_list:
                 if student in lecture.attending.all():
                     context['classification'] = lecture.classification
                     attendance[student.username][lecture.classification] += 1
@@ -364,7 +365,7 @@ def quick_validate(sheet):
 
     return valid, msg
 
-def add_import_data(request, sheet, course_pk):
+def add_import_data(request, sheet, datemode, course_pk):
     """
     Rows contain per-student information.
     Row 0, 1 and 2 are the header; 2 contains column names.
@@ -380,18 +381,24 @@ def add_import_data(request, sheet, course_pk):
     """
 
     # Firstly, create the lectures. Note that we only know the date w/o the year!
+    logger.debug("Now running add_import_data.")
+    logger.debug("Datemode: '{}'.".format(datemode))
     for col_nr in range(7, sheet.ncols-1):
         raw_date = sheet.cell_value(2, col_nr)
-        # raw_date += '/2014'
-        date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
+        logger.debug("Raw date: '{}'.".format(raw_date))
+        date = datetime(*xlrd.xldate_as_tuple(raw_date, datemode))
+        logger.debug("Converted date: '{}'.".format(date))
         title = 'Lecture ' + str(col_nr-6)
         slug = 'lecture-' + str(col_nr-6)
         try:
             lecture = Lecture.objects.get(date__exact=date)
+            logger.debug("Found lecture '{}'.".format(lecture))
         except Lecture.DoesNotExist:
             lecture = Lecture.objects.create_lecture(course_pk, date, \
                     title, 'R', slug)
             lecture.save()
+            logger.debug("Created lecture '{}'.".format(lecture))
+    logger.debug("All lectures exist, or created.")
 
     if Site._meta.installed:
         site = Site.objects.get_current()
@@ -408,8 +415,10 @@ def add_import_data(request, sheet, course_pk):
         # Student ID's that differ from their UvANetID. Thanks to SIS...
         try:
             student = Student.objects.get(username__exact=UvANetID)
-        except:
+            logger.debug("Found student '{}'.".format(student))
+        except Student.DoesNotExist:
             # User does not exist, create new user.
+            logger.debug("Created student '{}'.".format(student))
             email = sheet.cell_value(row_nr, 4)
             password = ''.join(random.choice(chars) for x in range(12))
             first_name = sheet.cell_value(row_nr, 2)
@@ -423,20 +432,31 @@ def add_import_data(request, sheet, course_pk):
             profile.offset = sheet.cell_value(row_nr, 6)
             profile.save()
             student = Student.objects.get(pk=new_user.id)
-        student.StudentCourses.add(course_pk)
-        student.save()
+        course = Course.objects.get(pk=course_pk)
+        logger.debug("StudentCourses '{}'.".format(student.StudentCourses.all()))
+        if course not in student.StudentCourses.all():
+            student.StudentCourses.add(course_pk)
+            student.save()
+            logger.debug("Course '{}' not in ".format(course)+\
+                    "StudentCourses of '{}'; added.".format(student))
 
         # Lastly, add the attendance of known Lectures to known Students.
         # It might be wise to loop for cols for row to save queries?
         for col_nr in range(7, sheet.ncols-1):
             raw_date = sheet.cell_value(2, col_nr)
-            # raw_date += '/2014'
-            date = datetime.strptime(raw_date, "%s" % "%d/%b/%Y")
+            date = datetime(*xlrd.xldate_as_tuple(raw_date, datemode))
             lecture = Lecture.objects.get(date__exact=date)
             status = sheet.cell_value(row_nr, col_nr)
             if status == 1:
                 lecture.attending.add(student)
+                logger.debug("Student '{}' ".format(student) +\
+                        "now attending '{}'.".format(lecture))
                 lecture.save()
+            elif status == 0:
+                logger.debug("Student '{}' ".format(student) +\
+                        "did not attend '{}'.".format(lecture))
+
+    logger.debug("All students exist or created. All attendance registered.")
 
 
 @user_passes_test(lambda u: u.is_superuser)
@@ -477,11 +497,13 @@ def read_from_xls(request, course_pk):
             valid, msg = quick_validate(sheet)
             if valid:
                 try:
-                    add_import_data(request, sheet, course_pk)
+                    add_import_data(request, sheet, book.datemode, course_pk)
                     msg = '<span class="glyphicon glyphicon-ok"></span> '+\
                             'Import successfull!'
                     messages.add_message(request, messages.SUCCESS, msg)
-                except:
+                except Exception as e:
+                    # logger.error(e)
+                    logger.exception("Error in import function:")
                     msg = '<span class="glyphicon glyphicon-flash"></span> '+\
                             'Import failed due to unknown reasons.'+\
                             'The data may have been compromised, mail admin!'
@@ -505,3 +527,45 @@ def read_from_xls(request, course_pk):
 
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
+
+from CARD.settings import STATIC_ROOT
+class Barcode(generic.ListView):
+    model = Barcode
+    template_name = 'education/barcode.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(Barcode, self).get_context_data(**kwargs)
+        # Symbology-specific arrays
+
+        context['barcode'] = generate_code39("hank moody")
+
+        return context
+
+# http://notionovus.com/blog/code-39-barcode-biscuits/
+def generate_code39(value):
+    code39_binary = {
+        '0':'1010001110111010','1':'1110100010101110','2':'1011100010101110',\
+        '3':'1110111000101010','4':'1010001110101110','5':'1110100011101010',\
+        '6':'1011100011101010','7':'1010001011101110','8':'1110100010111010',\
+        '9':'1011100010111010','A':'1110101000101110','B':'1011101000101110',\
+        'C':'1110111010001010','D':'1010111000101110','E':'1110101110001010',\
+        'F':'1011101110001010','G':'1010100011101110','H':'1110101000111010',\
+        'I':'1011101000111010','J':'1010111000111010','K':'1110101010001110',\
+        'L':'1011101010001110','M':'1110111010100010','N':'1010111010001110',\
+        'O':'1110101110100010','P':'1011101110100010','Q':'1010101110001110',\
+        'R':'1110101011100010','S':'1011101011100010','T':'1010111011100010',\
+        'U':'1110001010101110','V':'1000111010101110','W':'1110001110101010',\
+        'X':'1000101110101110','Y':'1110001011101010','Z':'1000111011101010',\
+        '-':'1000101011101110','.':'1110001010111010',' ':'1000111010111010',\
+        '$':'1000100010001010','/':'1000100010100010','+':'1000101000100010', \
+        '%':'1010001000100010','*':'1000101110111010'
+    }
+
+    #strCode39 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*"
+
+    strText = "*123test890*"
+    strRaw = ""
+    for i in range(len(strText)):
+        strRaw += code39_binary[strText[i].upper()];
+
+    return strRaw

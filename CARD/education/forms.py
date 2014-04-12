@@ -220,7 +220,7 @@ class XlsInputForm(forms.Form):
 
         if not (extension in IMPORT_FILE_TYPES):
             raise forms.ValidationError(
-                    _(flash+'Filetype %(ext)s is not a valid Excel file. '+\
+                    _('Filetype %(ext)s is not a valid Excel file. '+\
                     'Please make sure your input is an Excel file. '+\
                     'Note that Excel 2007 is NOT supported!'),
                     code = 'invalid',

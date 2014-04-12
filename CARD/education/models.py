@@ -80,3 +80,9 @@ class Lecture(models.Model):
     def in_future(self):
         now = timezone.now()
         return now <= self.date
+
+
+class Barcode(models.Model):
+    course = models.ForeignKey(Course)
+    student = models.ManyToManyField('Student', null = True, blank = True, \
+            related_name = _('barcode'))
