@@ -8,6 +8,7 @@ from django.contrib.sites.models import Site
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
+from django.utils import timezone
 
 from registration.views import _RequestPassingFormView
 from registration.models import RegistrationProfile
@@ -268,7 +269,9 @@ def save_to_xls(request, course_pk):
     bold = xlwt.easyxf('font: bold on;')
     boldborders = xlwt.easyxf('font: bold on;'+ \
         'borders: top thin, right thin, bottom  thin, left thin;')
-    #datetime_style = xlwt.easyxf(num_format_str='dd/mm/yyyy hh:mm')
+    datetime_style = xlwt.easyxf(num_format_str='[$-413]d/mmm;@',\
+            strg_to_parse='borders: top thin, right thin, bottom  thin,'+\
+            ' left thin; font: bold on;')
     #date_style = xlwt.easyxf(num_format_str='dd/mm/yyyy')
 
     # Create header.
@@ -293,7 +296,7 @@ def save_to_xls(request, course_pk):
             sheet.write(row, 0, profile.other_id, style=borders)
             sheet.write(row, 5, profile.programme , style=borders)
             sheet.write(row, 6, profile.offset , style=borders)
-        except:
+        except RegistrationProfile.DoesNotExist:
             pass # Perhaps catch this error in a more elegant way.
         sheet.write(row, 1, student.username , style=borders)
         sheet.write(row, 2, student.first_name , style=borders)
@@ -304,8 +307,9 @@ def save_to_xls(request, course_pk):
         col = 7
         for lecture in Lecture.objects.filter(course_id=course.id):
             if not header:
-                date = lecture.date.strftime("%s" % "%d/%b/%Y")
-                sheet.write(2, col, date , style=boldborders)
+                date = timezone.make_naive(lecture.date,\
+                        timezone.get_default_timezone())
+                sheet.write(2, col, date , style=datetime_style)
             attending = lecture.attending.all()
             if student in attending: val = 1
             else: val = 0
