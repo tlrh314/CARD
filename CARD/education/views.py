@@ -87,6 +87,7 @@ class AdminCourseView(generic.DetailView):
     template_name = 'education/admin_course.html'
 
     def get_context_data(self, **kwargs):
+        logger.debug("Now running get_context_data of AdminCourseView.")
         # Initialize the context and set up the current_course.
         context = super(AdminCourseView, self).get_context_data(**kwargs)
         current_course = Course.objects.get(id=self.kwargs.get("course_pk"))
@@ -95,6 +96,8 @@ class AdminCourseView(generic.DetailView):
         # Initialize 2D array with keys UvANetID and type of Lecture.
         attendance = defaultdict(dict)
         lectures_list = Lecture.objects.filter(course_id=current_course.id)
+        nr_of_students = current_course.student.all().count()
+        logger.debug("Total students '{}'".format(nr_of_students))
         for student in current_course.student.all():
             for abbreviation, fullname in TYPES:
                 attendance[student.username][abbreviation] = 0
@@ -112,8 +115,10 @@ class AdminCourseView(generic.DetailView):
             offset = profile.offset
             attendance[student.username]['total'] += offset
             attendance[student.username]['offset'] = offset
+            logger.debug("Done with student '{}'.".format(student))
         context['attendance'] = attendance
         context['TYPES'] = TYPES
+        logger.debug("Running get_context_data completed.")
 
         return context
 
