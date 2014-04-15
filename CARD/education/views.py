@@ -87,39 +87,50 @@ class AdminCourseView(generic.DetailView):
     pk_url_kwarg = 'course_pk'
     template_name = 'education/admin_course.html'
 
+    def get_student_offset(student):
+        if not isinstance(student, Student):
+            return None
+        try:
+            profile = RegistrationProfile.objects.get(user_id=student)
+            offset = profile.offset
+        except:
+            offset = None
+        return offset
+
     def get_context_data(self, **kwargs):
         logger.debug("Now running get_context_data of AdminCourseView.")
         # Initialize the context and set up the current_course.
         context = super(AdminCourseView, self).get_context_data(**kwargs)
-        current_course = Course.objects.get(id=self.kwargs.get("course_pk"))
-        context['course'] = current_course
+        course = Course.objects.get(id=self.kwargs.get("course_pk"))
+        #context['course'] = current_course
 
         # Initialize 2D array with keys UvANetID and type of Lecture.
-        attendance = defaultdict(dict)
-        lectures_list = Lecture.objects.filter(course_id=current_course.id)
-        nr_of_students = current_course.student.all().count()
-        logger.debug("Total students '{}'".format(nr_of_students))
-        for student in current_course.student.all():
-            for abbreviation, fullname in TYPES:
-                attendance[student.username][abbreviation] = 0
-            attendance[student.username]['total'] = 0
-            attendance[student.username]['offset'] = 0
+        #attendance = defaultdict(dict)
+        context['lectures'] = Lecture.objects.filter(course_id=course.id)
 
-            # Calculate the attendance for all lectures in this course.
-            for lecture in lectures_list:
-                if student in lecture.attending.all():
-                    context['classification'] = lecture.classification
-                    attendance[student.username][lecture.classification] += 1
-                    attendance[student.username]['total'] += 1
+        #nr_of_students = current_course.student.all().count()
+        #logger.debug("Total students '{}'".format(nr_of_students))
+        #for student in current_course.student.all():
+        #    for abbreviation, fullname in TYPES:
+        #        attendance[student.username][abbreviation] = 0
+        #    attendance[student.username]['total'] = 0
+        #    attendance[student.username]['offset'] = 0
 
-            profile = RegistrationProfile.objects.get(user_id=student)
-            offset = profile.offset
-            attendance[student.username]['total'] += offset
-            attendance[student.username]['offset'] = offset
-            logger.debug("Done with student '{}'.".format(student))
-        context['attendance'] = attendance
+        #    # Calculate the attendance for all lectures in this course.
+        #    for lecture in lectures_list:
+        #        if student in lecture.attending.all():
+        #            context['classification'] = lecture.classification
+        #            attendance[student.username][lecture.classification] += 1
+        #            attendance[student.username]['total'] += 1
+
+        #    profile = RegistrationProfile.objects.get(user_id=student)
+        #    offset = profile.offset
+        #    attendance[student.username]['total'] += offset
+        #    attendance[student.username]['offset'] = offset
+        #    logger.debug("Done with student '{}'.".format(student))
+        #context['attendance'] = attendance
         context['TYPES'] = TYPES
-        logger.debug("Running get_context_data completed.")
+        #logger.debug("Running get_context_data completed.")
 
         return context
 
