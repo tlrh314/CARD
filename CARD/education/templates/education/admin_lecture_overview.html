@@ -15,14 +15,14 @@
         </td>
         <td>
           <a href="{% url 'education:admin_lecture' lecture.course.id lecture.id %}">
-            {{ lecture.title }} ({{ lecture.date }}) info
             <span class ="glyphicon glyphicon-info-sign"></span>
+            {{ lecture.title }} ({{ lecture.date }})
           </a>
         </td>
         <td>
          <a href="{% url 'education:register_form' lecture.course.id lecture.id %}">
-           {{ lecture.name }} Register attendance
            <span class ="glyphicon glyphicon-pencil"></span>
+           {{ lecture.name }} Register attendance
          </a>
        </td>
     {% endfor %}

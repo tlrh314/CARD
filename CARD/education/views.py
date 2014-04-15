@@ -81,6 +81,7 @@ class AdminIndexView(generic.ListView):
     def get_queryset(self):
         return Course.objects.all
 
+# lecture.attending.through.objects.all()
 class AdminCourseView(generic.DetailView):
     model = Course
     pk_url_kwarg = 'course_pk'
@@ -200,7 +201,9 @@ class RegisterAttendance(generic.FormView):
     # trough a hidden field. There ought to be a more elegant solution.
     def get_context_data(self, **kwargs):
         context = super(RegisterAttendance, self).get_context_data(**kwargs)
-        context['lecture'] = self.kwargs.get("lecture_pk")
+        lecture_pk = self.kwargs.get("lecture_pk")
+        context['lecture'] = lecture_pk
+        context['lect']= Lecture.objects.get(pk=lecture_pk)
         if Site._meta.installed:
             site = Site.objects.get_current()
         else:
@@ -212,10 +215,23 @@ class RegisterAttendance(generic.FormView):
     def form_valid(self,form):
         cleaned_data = form.cleaned_data
         usr = cleaned_data['UvANetID']
+        try:
+          student = Student.objects.get(username__iexact=usr)
+          name = student.first_name + ' ' + student.last_name
+        except Student.DoesNotExist:
+          pass
+        try:
+          profile = RegistrationProfile.objects.get(other_id__iexact=usr).username
+          student = profile.objects.get(profile)
+          name = student.first_name + ' ' + student.last_name
+        except RegistrationProfile.DoesNotExist:
+          pass
         lecture = Lecture.objects.get(id=cleaned_data['lecture_pk'])
 
         msg = '<span class="glyphicon glyphicon-ok"></span> '+\
-                '%s is now registered as attending %s' % (usr, lecture)
+                '%(UvANetID)s is now registered as attending %(lect)s.' % \
+                { 'UvANetID': usr, 'lect': lecture } +\
+                '<br><h1>%(name)s</h1>' % { 'name' : name }
         messages.add_message(self.request, messages.SUCCESS, msg)
         return redirect(self.get_success_url())
 
