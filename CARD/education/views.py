@@ -227,16 +227,22 @@ class RegisterAttendance(generic.FormView):
         cleaned_data = form.cleaned_data
         usr = cleaned_data['UvANetID']
         try:
-          student = Student.objects.get(username__iexact=usr)
-          name = student.first_name + ' ' + student.last_name
+            student = Student.objects.get(username__iexact=usr)
+            logger.debug("ShowName: Student '{}' found for ".format(student) + \
+                    "UvANetID '{}'.".format(usr))
+            name = student.first_name + ' ' + student.last_name
         except Student.DoesNotExist:
-          pass
+            name = "Name Unknown"
+            logger.debug("ShowName: Student '{}' not found.".format(usr))
         try:
-          profile = RegistrationProfile.objects.get(other_id__iexact=usr).username
-          student = profile.objects.get(profile)
-          name = student.first_name + ' ' + student.last_name
+            profile = RegistrationProfile.objects.get(other_id__iexact=usr)
+            logger.debug("ShowName: profile '{}' found for"\
+                    .format(profile.user) + "UvANetID '{}'.".format(usr))
+            student = Student.objects.get(id=profile.user_id)
+            name = student.first_name + ' ' + student.last_name
         except RegistrationProfile.DoesNotExist:
-          pass
+            name = "Name Unknown"
+            logger.debug("ShowName: profile '{}' not found.".format(usr))
         lecture = Lecture.objects.get(id=cleaned_data['lecture_pk'])
 
         msg = '<span class="glyphicon glyphicon-ok"></span> '+\

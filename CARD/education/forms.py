@@ -71,6 +71,7 @@ class RegisterAttendanceForm(forms.Form):
                         params={'id': UvANetID},
                         )
             logger.debug("Modified input data: '{}'.".format(UvANetID))
+            cleaned_data['UvANetID'] = UvANetID
         except KeyError:
             logger.error("KeyError: UvANetID. Cleaned_data: '{}'".format(\
                     cleaned_data))
