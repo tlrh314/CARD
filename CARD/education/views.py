@@ -33,9 +33,6 @@ class IndexView(generic.ListView):
     context_object_name = 'latest_course_list'
 
     def get_queryset(self):
-        # all students for a course
-        #course = Course.objects.get(pk=xxxx)
-        #course.student.all()
         student = Student.objects.get(pk=self.request.user.id)
         return student.StudentCourses.all()
 
@@ -81,7 +78,7 @@ class AdminIndexView(generic.ListView):
     def get_queryset(self):
         return Course.objects.all
 
-# lecture.attending.through.objects.all()
+# lecture.attending.through.objects.all() ?
 class AdminCourseView(generic.DetailView):
     model = Course
     pk_url_kwarg = 'course_pk'
@@ -98,45 +95,13 @@ class AdminCourseView(generic.DetailView):
         return offset
 
     def get_context_data(self, **kwargs):
-        logger.debug("Now running get_context_data of AdminCourseView.")
-        # Initialize the context and set up the current_course.
+        # Initialize the context: set up the lectures and the TYPES.
         context = super(AdminCourseView, self).get_context_data(**kwargs)
         course = Course.objects.get(id=self.kwargs.get("course_pk"))
-        #context['course'] = current_course
-
-        # Initialize 2D array with keys UvANetID and type of Lecture.
-        #attendance = defaultdict(dict)
         context['lectures'] = Lecture.objects.filter(course_id=course.id)
-
-        #nr_of_students = current_course.student.all().count()
-        #logger.debug("Total students '{}'".format(nr_of_students))
-        #for student in current_course.student.all():
-        #    for abbreviation, fullname in TYPES:
-        #        attendance[student.username][abbreviation] = 0
-        #    attendance[student.username]['total'] = 0
-        #    attendance[student.username]['offset'] = 0
-
-        #    # Calculate the attendance for all lectures in this course.
-        #    for lecture in lectures_list:
-        #        if student in lecture.attending.all():
-        #            context['classification'] = lecture.classification
-        #            attendance[student.username][lecture.classification] += 1
-        #            attendance[student.username]['total'] += 1
-
-        #    profile = RegistrationProfile.objects.get(user_id=student)
-        #    offset = profile.offset
-        #    attendance[student.username]['total'] += offset
-        #    attendance[student.username]['offset'] = offset
-        #    logger.debug("Done with student '{}'.".format(student))
-        #context['attendance'] = attendance
         context['TYPES'] = TYPES
-        #logger.debug("Running get_context_data completed.")
 
         return context
-
-  #def get_queryset(self):
-    #course = Course.objects.get(pk=xxx)
-    #return course.student.all()
 
 class AdminLectureList(generic.ListView):
     template_name = 'education/admin_lecture_overview.html'
