@@ -48,8 +48,11 @@ class CourseView(generic.DetailView):
         progress = 0
 
         # Calculate the attendance for all lectures in this course.
-        for lecture in Lecture.objects.filter(course_id=current_course.id):
-            for attending in lecture.attending.all():
+        lecture_list = Lecture.objects.filter(course_id=current_course.id).\
+                order_by('-date')
+        for lecture in lecture_list:
+            attending_list = lecture.attending.all()
+            for attending in attending_list:
                 context['lecture'] = attending
                 if self.request.user.username == attending.username:
                     progress += 1
@@ -98,7 +101,8 @@ class AdminCourseView(generic.DetailView):
         # Initialize the context: set up the lectures and the TYPES.
         context = super(AdminCourseView, self).get_context_data(**kwargs)
         course = Course.objects.get(id=self.kwargs.get("course_pk"))
-        context['lectures'] = Lecture.objects.filter(course_id=course.id)
+        context['lectures'] = Lecture.objects.filter(\
+                course_id=course.id).order_by('-date')
         context['TYPES'] = TYPES
 
         return context
@@ -108,7 +112,7 @@ class AdminLectureList(generic.ListView):
     context_object_name = 'all_lecture_list'
 
     def get_queryset(self):
-        return Lecture.objects.all
+        return Lecture.objects.order_by('-date')
 
 class AdminLectureView(generic.DetailView):
     model = Lecture
@@ -196,18 +200,21 @@ class RegisterAttendance(generic.FormView):
             logger.debug("ShowName: Student '{}' found for ".format(student) + \
                     "UvANetID '{}'.".format(usr))
             name = student.first_name + ' ' + student.last_name
+            if name == ' ':
+                name = usr
+                logger.debug("UvANetID: '{}' has empty name.".format(name))
         except Student.DoesNotExist:
             name = "Name Unknown"
             logger.debug("ShowName: Student '{}' not found.".format(usr))
-        try:
-            profile = RegistrationProfile.objects.get(other_id__iexact=usr)
-            logger.debug("ShowName: profile '{}' found for"\
-                    .format(profile.user) + "UvANetID '{}'.".format(usr))
-            student = Student.objects.get(id=profile.user_id)
-            name = student.first_name + ' ' + student.last_name
-        except RegistrationProfile.DoesNotExist:
-            name = "Name Unknown"
-            logger.debug("ShowName: profile '{}' not found.".format(usr))
+            try:
+                profile = RegistrationProfile.objects.get(other_id__iexact=usr)
+                logger.debug("ShowName: profile '{}' found for"\
+                        .format(profile.user) + "UvANetID '{}'.".format(usr))
+                student = Student.objects.get(id=profile.user_id)
+                name = student.first_name + ' ' + student.last_name
+            except RegistrationProfile.DoesNotExist:
+                name = "Name Unknown"
+                logger.debug("ShowName: profile '{}' not found.".format(usr))
         lecture = Lecture.objects.get(id=cleaned_data['lecture_pk'])
 
         msg = '<span class="glyphicon glyphicon-ok"></span> '+\
@@ -539,12 +546,15 @@ from CARD.settings import STATIC_ROOT
 class Barcode(generic.ListView):
     model = Barcode
     template_name = 'education/barcode.html'
+    #pk_url_kwarg = 'course_pk'
 
     def get_context_data(self, **kwargs):
         context = super(Barcode, self).get_context_data(**kwargs)
         # Symbology-specific arrays
 
-        context['barcode'] = generate_code39("hank moody")
+        context['barcode'] = generate_code39(self.kwargs.get("value"))
+        context['value'] = self.kwargs.get("value")
+
 
         return context
 
@@ -570,7 +580,7 @@ def generate_code39(value):
 
     #strCode39 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*"
 
-    strText = "*123test890*"
+    strText = "value"
     strRaw = ""
     for i in range(len(strText)):
         strRaw += code39_binary[strText[i].upper()];

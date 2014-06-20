@@ -133,7 +133,7 @@ class RegisterAttendanceForm(forms.Form):
                     student.StudentCourses.add(course)
                     student.save()
                     # add Student to Lecture.attending
-                    lecture.attending.add(student)
+                    #lecture.attending.add(student)
                     lecture.save()
                     logger.debug("Student '{}' is enrolled ".format(UvANetID)+\
                             "at DataNose.")
@@ -146,7 +146,7 @@ class RegisterAttendanceForm(forms.Form):
                             "at DataNose for course '{}'".format(course))
                     sis = '<a href="http://www.sis.uva.nl">SIS</a>'
                     raise forms.ValidationError(
-                            _(flash+'%(UvANetID)s is not enrolled for %(course)s'+\
+                            _(flash+'%(UvANetID)s is not enrolled for %(course)s '+\
                                     'at DataNose. Please enrol at %(SIS)s. ' +\
                                     '<br>Contact the coordinator now.'),
                             code = 'invalid',

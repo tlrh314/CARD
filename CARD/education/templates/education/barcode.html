@@ -65,7 +65,7 @@
       '1000101110111010'); // /, +, %, *
 
     var strCode39 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-. $/+%*";
-    var strText = "*123TEST890*";
+    var strText = "{{ value }}";
     var strRaw = "";
     for (var i = 0; i < strText.length; i++)
       strRaw += arrayCode39Bin[strCode39.indexOf(strText.charAt(i))];
