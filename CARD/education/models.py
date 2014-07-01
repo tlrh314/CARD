@@ -15,6 +15,14 @@ class Student(User):
     class Meta:
         proxy = True
 
+class TeacherManager(models.Manager):
+    def get_query_set(self):
+        return self.filter(groups__name='Teacher')
+
+class Teacher(User):
+    class Meta:
+        proxy = True
+
 class CourseManager(models.Manager):
     def create_course(self, name):
         course = self.create(title=title)
@@ -33,7 +41,8 @@ class Course(models.Model):
     # change student to enrolled?
     student = models.ManyToManyField('Student', null = True, blank = True, \
             related_name = _('StudentCourses'))
-    #tutor = models.ManyToManyField('Tutor', null = True, blank = True, related_name = _('Tutor courses'))
+    teacher = models.ManyToManyField('Teacher', null = True, blank = True, \
+            related_name = _('TeacherCourses'))
     created = models.DateTimeField(auto_now_add = True)
     updated = models.DateTimeField(auto_now = True)
 
