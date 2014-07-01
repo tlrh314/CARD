@@ -2,17 +2,53 @@
 {% load i18n %}
 
 {% block content %}
-<h1>Home of the CARD </h1>
-Welcome to CARD website
-{% if user.is_authenticated %}
-<ul>
-  <li>Username: {{ user.username }} </li>
-  <li>Email: {{ user.email }} </li>
-  <li>First Name: {{ user.first_name }} </li>
-  <li>Last Name: {{ user.last_name }} </li>
-</ul>
-{% endif %}
+<h1>Home of CARD </h1>
 {% if user.is_superuser %}
-<p> Adminbaasje </p>
+<p> You do have Admin Powers. With great power comes great responsibility! </p>
+{% endif %}
+{% if user.is_authenticated %}
+<div class="panel panel-default">
+  <div class="panel-heading">Student Data</div>
+  <div class="panel-body">
+    <p>
+      We store some personal information in our database to identify you.
+      In addition, we keep a record of courses you are registered
+      for that use CARD. For each lecture of that course we store whether you
+      did or did not attend. The following personal information is currently stored.
+    </p>
+  </div>
+  <table class="table table-condensed">
+    <tr>
+      <td><b>Username</b></td>
+      <td>{{ user.username }} </td>
+    </tr>
+    <tr>
+      <td><b>Email</b></td>
+      <td>{{ user.email }} </td>
+    </tr>
+    <tr>
+      <td><b>First Name</b></td>
+      <td>{{ user.first_name }} </td>
+    </tr>
+    <tr>
+      <td><b>Last Name</b></td>
+      <td>{{ user.last_name }} </td>
+    </tr>
+  </table>
+</div>
+{% else %}
+Course Attendance Registration: Digitalized (CARD) enables easy, digital attendance
+registration for courses. Students can be registered fast and easy using a NEDAP
+USB reader to obtain StudentID numbers from the StudentID cards (provided by the
+University of Amsterdam). Alternatively, students may enter his/her StudentID
+number manually (e.g. when the student forgot to bring along his/her StudentID
+card). <br>
+<br>
+In addition, CARD enables students to easily monitor their attendance progress.
+This is relevant in particular for colloquia and courses that are passed after a
+certain number of lectures has been attended. <br>
+<br>
+For more information, please contact <A HREF="mailto:T.L.R.Halbesma@UvA.nl">
+  Timo Halbesma</A>
 {% endif %}
 {% endblock %}
