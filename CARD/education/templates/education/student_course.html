@@ -4,6 +4,7 @@
 
 {% block content %}
   <h1> {{ course.name }} </h1>
+  {{ lecture_list }}
   {# Ugly fix? This should perhaps in view rather than in template? #}
   {% set enrolled = 'False' %}
   {% for id in course.student.all %}
@@ -55,7 +56,7 @@
                 <td><b>Title</b></td><td><b>Type</b></td><td><b>Status</b></td>
                 <tr><td>Last Year</td><td>-</td><td>-</td><td>-</td>
                 <td><span class="label label-info">{{ offset }} visits</span></td>
-                {% for lecture in course.lecture_set.all %}
+                {% for lecture in course.lecture_set.all|dictsortreversed:"date"  %}
                   <tr><td>{{ lecture.date }}</td>
                   <td>{{ lecture.lecturers }}</td>
                   <td>

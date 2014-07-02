@@ -315,7 +315,8 @@ def save_to_xls(request, course_pk):
 
         # Insert student attendance data: 1 for attending, 0 for absent.
         col = 7
-        for lecture in Lecture.objects.filter(course_id=course.id):
+        for lecture in Lecture.objects.filter(course_id=course.id)\
+                .order_by('date'):
             if not header:
                 date = timezone.make_naive(lecture.date,\
                         timezone.get_default_timezone())
