@@ -404,7 +404,7 @@ def add_import_data(request, sheet, datemode, course_pk):
         date = datetime(*xlrd.xldate_as_tuple(raw_date, datemode))
         logger.debug("Converted date: '{}'.".format(date))
         title = 'Lecture ' + str(col_nr-6)
-        slug = 'lecture-' + str(col_nr-6)
+        slug = 'lecture-1415-' + str(col_nr-6)
         try:
             lecture = Lecture.objects.get(date__exact=date)
             logger.debug("Found lecture '{}'.".format(lecture))
