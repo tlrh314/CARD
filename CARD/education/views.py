@@ -404,7 +404,7 @@ def add_import_data(request, sheet, datemode, course_pk):
         date = datetime(*xlrd.xldate_as_tuple(raw_date, datemode))
         logger.debug("Converted date: '{}'.".format(date))
         title = 'Lecture ' + str(col_nr-6)
-        slug = 'lecture-' + str(col_nr-6)
+        slug = 'lecture-1415-' + str(col_nr-6)
         try:
             lecture = Lecture.objects.get(date__exact=date)
             logger.debug("Found lecture '{}'.".format(lecture))
@@ -433,7 +433,6 @@ def add_import_data(request, sheet, datemode, course_pk):
             logger.debug("Found student '{}'.".format(student))
         except Student.DoesNotExist:
             # User does not exist, create new user.
-            logger.debug("Created student '{}'.".format(student))
             email = sheet.cell_value(row_nr, 4)
             password = ''.join(random.choice(chars) for x in range(12))
             first_name = sheet.cell_value(row_nr, 2)
@@ -447,6 +446,7 @@ def add_import_data(request, sheet, datemode, course_pk):
             profile.offset = sheet.cell_value(row_nr, 6)
             profile.save()
             student = Student.objects.get(pk=new_user.id)
+            logger.debug("Created student '{}'.".format(student))
         course = Course.objects.get(pk=course_pk)
         logger.debug("StudentCourses '{}'.".format(student.StudentCourses.all()))
         if course not in student.StudentCourses.all():

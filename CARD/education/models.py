@@ -35,7 +35,7 @@ class Course(models.Model):
     dataNoseID = models.DecimalField(_('DataNose ID'), max_digits=7,\
             decimal_places=0, unique=True)
     catalogID = models.CharField(_('Catalog Number'), max_length=10,\
-            unique=True, blank=True)
+            unique=False, blank=True)
     description = models.TextField(_('Description'))
     coordinator = models.CharField(_('Coordinator'), max_length=100)
     # change student to enrolled?
