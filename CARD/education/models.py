@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from CARD.settings import TYPES
+import datetime
 
 import datetime
 from django.utils import timezone
@@ -89,6 +90,16 @@ class Lecture(models.Model):
     def in_future(self):
         now = timezone.now()
         return now <= self.date
+		
+    def within_month(self):
+        now = timezone.now()
+        month = datetime.timedelta(days=30)
+        return (now <= self.date and now + month >= self.date)
+
+    def after_month(self):
+        now = timezone.now()
+        month = datetime.timedelta(days=30)
+        return  now + month > self.date
 
 
 class Barcode(models.Model):
