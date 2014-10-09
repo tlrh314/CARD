@@ -57,7 +57,7 @@
                 <tr><td>Last Year</td><td>-</td><td>-</td><td>-</td>
                 <td><span class="label label-info">{{ offset }} visits</span></td>
                 {% for lecture in course.lecture_set.all|dictsortreversed:"date"  %}
-				  {% if lecture.after_month %}
+				  {% if not lecture.after_month %}
 					{{ continue }}
 				  {% else %}
                     <tr><td>{{ lecture.date }}</td>
