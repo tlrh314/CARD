@@ -59,28 +59,30 @@
                 {% for lecture in course.lecture_set.all|dictsortreversed:"date"  %}
 				  {% if lecture.after_month %}
 					{{ continue }}
-                  <tr><td>{{ lecture.date }}</td>
-                  <td>{{ lecture.lecturers }}</td>
-                  <td>
-                    <a href="{% url 'education:lecture' course.pk lecture.pk %}">
-                      {{ lecture.title }}
-                    </a>
-                  </td>
-                    <td>{{ lecture.get_classification_display }}</td>
-                  {% elif lecture.within_month %}
-                    <td><span class="label label-info"> Future </span></td>
-                  {% else %}
-                    {% set status = 'Absent' %}
-                    {% for present in lecture.attending.all %}
-                      {% ifequal present.username user.username %}
-                        {% set status = 'Present' %}
-                        <td><span class="label label-success">{{ status }}</span></td>
-                        {{ break }}
+				  {% else %}
+                    <tr><td>{{ lecture.date }}</td>
+                    <td>{{ lecture.lecturers }}</td>
+                    <td>
+                      <a href="{% url 'education:lecture' course.pk lecture.pk %}">
+                        {{ lecture.title }}
+                      </a>
+                    </td>
+                      <td>{{ lecture.get_classification_display }}</td>
+                    {% if lecture.in_future %}
+                      <td><span class="label label-info"> Future </span></td>
+                    {% else %}
+                      {% set status = 'Absent' %}
+                      {% for present in lecture.attending.all %}
+                        {% ifequal present.username user.username %}
+                          {% set status = 'Present' %}
+                          <td><span class="label label-success">{{ status }}</span></td>
+                          {{ break }}
+                        {% endifequal %}
+                      {% endfor %}
+                      {% ifequal status 'Absent' %}
+                        <td><span class="label label-danger">{{ status }}</span></td>
                       {% endifequal %}
-                    {% endfor %}
-                    {% ifequal status 'Absent' %}
-                      <td><span class="label label-danger">{{ status }}</span></td>
-                    {% endifequal %}
+					{% endif %}
                   {% endif %}
                 {% endfor %}
               </table>
