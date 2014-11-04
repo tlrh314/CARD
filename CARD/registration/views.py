@@ -168,8 +168,7 @@ def ivoauth(request):
             "/?next=" + next_page + "&ticket={#ticket}"
     post_data = [('token', IVOAUTH_TOKEN), ('callback_url', callback_url)]
     try:
-        content = json.loads(urlopen(IVOAUTH_URL + "/ticket",
-                             urlencode(post_data)).read())
+        content = json.loads(urlopen(IVOAUTH_URL + "/ticket", urlencode(post_data)).read())
     except HTTPError:
         logger.error("Invalid url.")
         return HttpResponseBadRequest()
@@ -202,6 +201,10 @@ def ivoauth_callback(request):
         logger.debug("ivoauth_callback successful.")
         attributes = content["attributes"]
         UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
+        #while UvANetID[0] == '0':
+        #    UvANetID = UvANetID[1:]
+        #    logger.debug("Stripping trailing 0's, UvANetID now is '{}'."\
+        #            .format(UvANetID))
         try:
             user = User.objects.get(username__exact=UvANetID)
             profile = RegistrationProfile.objects.get(user_id=user)
