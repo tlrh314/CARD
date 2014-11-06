@@ -8,5 +8,5 @@ sys.path.insert(0, os.path.abspath(os.path.join(root_path, 'app', 'CARD')))
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'CARD.settings'
 
-import django.core.handlers.wsgi
-application = django.core.handlers.wsgi.WSGIHandler()
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
