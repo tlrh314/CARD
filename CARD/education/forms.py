@@ -180,15 +180,26 @@ class RegisterAttendanceForm(forms.Form):
                 lecture.attending.add(student)
                 lecture.save()
         else:
-            logger.debug("Student '{}' not enrolled locally ".format(UvANetID) + \
-                    "for course '{}'.".format(course))
-            raise forms.ValidationError(
-                    _(flash+'%(UvANetID)s is not enrolled for %(course)s '+\
-                            'in CARD. Not checked at DataNose'),
-                    code = 'invalid',
-                    params = {'UvANetID': UvANetID,\
-                            'course': course, },
-                    )
+            enrolled = self.datanose_enrolled(UvANetID, course)
+            if enrolled == 'true':
+                logger.debug("Student '{}' is now enrolled locally ".format(UvANetID) + \
+                        "for course '{}'.".format(course))
+                student.StudentCourses.add(course)
+                student.save()
+                logger.debug("Student '{}' registered ".format(UvANetID) + \
+                        "as attending '{}'.".format(lecture))
+                lecture.attending.add(student)
+                lecture.save()
+            else:
+                logger.debug("Student '{}' not enrolled locally ".format(UvANetID) + \
+                        "for course '{}'.".format(course))
+                raise forms.ValidationError(
+                        _(flash+'%(UvANetID)s is not enrolled for %(course)s '+\
+                                'in CARD. Student also not enrolled at DataNose!'),
+                        code = 'invalid',
+                        params = {'UvANetID': UvANetID,\
+                                'course': course, },
+                        )
         # Alternatively, we can add the student to the course locally.
         # We could either check this at DataNose, or not.
 

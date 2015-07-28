@@ -16,19 +16,20 @@ from registration.models import RegistrationProfile
 from django.contrib.sites.models import RequestSite
 from django.contrib.sites.models import Site
 
-import re
 import json
 import logging
-import string, random
+import string
+import random
 
 from urllib import urlencode
 from urllib2 import urlopen, HTTPError
 
 from django.contrib.auth.models import User
 
-from CARD.settings import LOGIN_REDIRECT_URL, IVOAUTH_TOKEN, IVOAUTH_URL
+from CARD.settings import IVOAUTH_TOKEN, IVOAUTH_URL
 
 logger = logging.getLogger(__name__)
+
 
 class _RequestPassingFormView(FormView):
     """
@@ -165,7 +166,7 @@ def ivoauth(request):
     logger.debug("Now running ivoauth.")
     next_page = request.GET.get('next', '/')
     callback_url = str(request.build_absolute_uri("ivoauth/callback")) + \
-            "/?next=" + next_page + "&ticket={#ticket}"
+        "/?next=" + next_page + "&ticket={#ticket}"
     post_data = [('token', IVOAUTH_TOKEN), ('callback_url', callback_url)]
     try:
         content = json.loads(urlopen(IVOAUTH_URL + "/ticket",
@@ -202,6 +203,10 @@ def ivoauth_callback(request):
         logger.debug("ivoauth_callback successful.")
         attributes = content["attributes"]
         UvANetID = attributes["urn:mace:dir:attribute-def:uid"][0]
+        while UvANetID[0] == '0':
+            UvANetID = UvANetID[1:]  # remove the leading 0's
+            logger.debug("Stripping trailing 0's, UvANetID now is '{}'."
+                         .format(UvANetID))
         try:
             user = User.objects.get(username__exact=UvANetID)
             profile = RegistrationProfile.objects.get(user_id=user)
@@ -211,12 +216,12 @@ def ivoauth_callback(request):
             if profile.surfConnextID == 'None':
                 user.email = attributes["urn:mace:dir:attribute-def:mail"][0]
                 user.first_name = \
-                        attributes["urn:mace:dir:attribute-def:givenName"][0]
+                    attributes["urn:mace:dir:attribute-def:givenName"][0]
                 user.last_name = \
-                        attributes["urn:mace:dir:attribute-def:cn"][0]
+                    attributes["urn:mace:dir:attribute-def:cn"][0]
                 user.save()
                 profile.surfConnextID = \
-                        "surfconext/" + attributes["saml:sp:NameID"]["Value"]
+                    "surfconext/" + attributes["saml:sp:NameID"]["Value"]
                 profile.save()
                 logger.debug("Updated '{}' with surfconnext data".format(user))
         except User.DoesNotExist:
@@ -228,20 +233,23 @@ def ivoauth_callback(request):
             password = ''.join(random.choice(chars) for x in range(12))
             first_name = attributes["urn:mace:dir:attribute-def:givenName"][0]
             last_name = attributes["urn:mace:dir:attribute-def:cn"][0]\
-                    .split('.')[-1] # Delete initials
-            surfConnextID = "surfconext/" + attributes["saml:sp:NameID"]["Value"]
+                .split('.')[-1]  # Delete initials
+            surfConnextID = "surfconext/" + \
+                            attributes["saml:sp:NameID"]["Value"]
             if Site._meta.installed:
                 site = Site.objects.get_current()
             else:
                 site = RequestSite(request)
-            user = RegistrationProfile.objects.create_active_user(username, \
-                    email, password, first_name, last_name, surfConnextID, site)
+            user = RegistrationProfile.objects.\
+                create_active_user(username, email, password, first_name,
+                                   last_name, surfConnextID, site)
             logger.debug("Created new user '{}'.".format(user.username))
         # If the user does exist, but has no profile we get an error. Catch it!
         except RegistrationProfile.DoesNotExist:
-            logger.debug("Profile of '{}' does not exist; create.".format(UvANetID))
+            logger.debug("Profile of '{}' does not exist; create."
+                         .format(UvANetID))
             user.surfConnextID = "surfconext/" + \
-                    attributes["saml:sp:NameID"]["Value"]
+                attributes["saml:sp:NameID"]["Value"]
             profile = RegistrationProfile.objects.create_profile(user)
         # User exists, log in.
         user = authenticate(username=user.username)
@@ -252,6 +260,7 @@ def ivoauth_callback(request):
     return HttpResponseRedirect(next_page)
     #html = "<html><body>%s </body></html>" % user
     #return HttpResponse(html)
+
 
 def logout_user(request):
     logger.debug("Logged out user '{}'.".format(request.user.username))

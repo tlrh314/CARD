@@ -4,16 +4,16 @@
 
 {% block content %}
 {% if user.is_superuser %}
-  {% bootstrap_messages %}
   <h1> Register Attendance </h1>
   <h2> {{ lect.course.name }} / {{ lect.date }} </h2>
-  <form name = "attendance" action='' method="post" class="form" role="form">
+  <form name="attendance" action='' method="post" class="form" role="form">
     {% csrf_token %}
+    {% bootstrap_messages %}
     {% bootstrap_form form %}
     {% buttons %}
     <input type="hidden" name="lecture_pk" value="{{ lecture }}"/>
     <input type="hidden" name="site" value="{{ site }}"/>
-    <button type="submit" class="btn btn-primary">
+    <button type="submit" class="btn btn-primary" id="submit"> <!--style="position: relative;top: 100px">-->
       {% bootstrap_icon "star" %} is attending
     </button>
     {% endbuttons %}
