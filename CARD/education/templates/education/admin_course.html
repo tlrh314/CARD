@@ -18,6 +18,13 @@
         </a>
       </div>
       <div class="btn-group">
+        <a href="{% url 'education:export_lectures' course.id %}">
+          <button type="button" class="btn btn-default">
+           <span class= "glyphicon glyphicon-floppy-save"></span> Export Lecture Descriptions
+          </button>
+        </a>
+      </div>
+      <div class="btn-group">
         <a href="{% url 'education:import' course.id %}">
           <button type="button" class="btn btn-default">
            <span class= "glyphicon glyphicon-floppy-open"></span> Import

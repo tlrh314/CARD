@@ -22,6 +22,8 @@ urlpatterns = patterns('',
                 views.RegisterAttendance.as_view(),name='register_form'),
         url(r'(?P<course_pk>\d+)/export/$', views.save_to_xls, \
             name='export'),
+        url(r'(?P<course_pk>\d+)/export_lectures/$', views.save_lectures_to_xls, \
+            name='export_lectures'),
         url(r'(?P<course_pk>\d+)/import/$', views.read_from_xls, \
             name='import'),
         url(r'barcode/(?P<value>\d+)', views.Barcode.as_view(), \

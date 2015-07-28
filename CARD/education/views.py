@@ -380,6 +380,65 @@ def quick_validate(sheet):
 
     return valid, msg
 
+
+@user_passes_test(lambda u: u.is_superuser)
+def save_lectures_to_xls(request, course_pk):
+    """
+        Requires xlwt and helper functions base_26_chr (thus base_26_chr).
+
+        This function enables exporting a xls database of the lecture
+        descriptions.
+        Note that there is an 'off-by-one' due to xlwt's count starts at row 0,
+        whereas Excel starts at row 1.
+    """
+
+    course = Course.objects.get(id=course_pk)
+    xls = xlwt.Workbook(encoding='utf8')
+    sheet = xls.add_sheet('CARD Lecture Descriptions')
+
+    # Define custom styles.
+    plain = xlwt.Style.default_style
+    borders = xlwt.easyxf(\
+            'borders: top thin, right thin, bottom  thin, left thin;')
+    bold = xlwt.easyxf('font: bold on;')
+    boldborders = xlwt.easyxf('font: bold on;'+ \
+        'borders: top thin, right thin, bottom  thin, left thin;')
+    datetime_style = xlwt.easyxf(num_format_str='[$-413]d/mmm;@',\
+            strg_to_parse='borders: top thin, right thin, bottom  thin,'+\
+            ' left thin; font: bold on;')
+    #date_style = xlwt.easyxf(num_format_str='dd/mm/yyyy')
+
+    # Create header.
+    sheet.write(0, 0, 'Lecture Description %s' % course.name, \
+            style=bold)
+
+    sheet.write(2, 0, 'Date' , style=boldborders)
+    sheet.write(2, 1, 'Lecturer' , style=boldborders)
+    sheet.write(2, 2, 'Title' , style=boldborders)
+    sheet.write(2, 3, 'Description' , style=boldborders)
+    # sheet.write(2, 4, '# Students attended' , style=boldborders)
+    row = 3
+    for lecture in Lecture.objects.filter(course_id=course.id)\
+            .order_by('date'):
+        date = timezone.make_naive(lecture.date,\
+                timezone.get_default_timezone())
+        sheet.write(row, 0, date , style=datetime_style)
+        sheet.write(row, 1, lecture.lecturers, style=datetime_style)
+        sheet.write(row, 2, lecture.title, style=datetime_style)
+        sheet.write(row, 3, lecture.abstract, style=datetime_style)
+        # sheet.write(row, 4, lecture.attending, style=datetime_style)
+        row += 1
+
+    # Return a response that allows to download the xls-file.
+    fname = u'CARD Lecture Descriptions %(course)s tm %(now)s.xls' % { \
+            'course': course.name, \
+            'now' : datetime.now().strftime("%s" % ("%d %b %Y")) \
+            }
+    response = HttpResponse(mimetype='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="%s"' % (fname)
+    xls.save(response)
+    return response
+
 def add_import_data(request, sheet, datemode, course_pk):
     """
     Rows contain per-student information.
@@ -404,7 +463,7 @@ def add_import_data(request, sheet, datemode, course_pk):
         date = datetime(*xlrd.xldate_as_tuple(raw_date, datemode))
         logger.debug("Converted date: '{}'.".format(date))
         title = 'Lecture ' + str(col_nr-6)
-        slug = 'lecture-1415-' + str(col_nr-6)
+        slug = 'IIFPSVV62015-' + str(col_nr-6)
         try:
             lecture = Lecture.objects.get(date__exact=date)
             logger.debug("Found lecture '{}'.".format(lecture))
