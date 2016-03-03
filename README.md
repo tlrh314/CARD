@@ -1,6 +1,8 @@
 UvA-Grassroots project Course Attendance Registration: Digitalized (CARD).
 =======
 
+** CARD features have been implemented in the existing UvA/FNWI systems. This project is deprecated and no longer in use **
+
 Keywords: Attendance registration, RFID student id card, CARD, University of
 Amsterdam.
 
